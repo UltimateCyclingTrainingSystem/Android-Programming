@@ -445,7 +445,7 @@ public class MainActivitycxc extends AppCompatActivity implements BluetoothAdapt
             final int crankRevolutions = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT16,6);
             value_offset+=2;
             final int lastCrankEventTime = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT16,8);
-
+            final float Power = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT16,2);
             if (mLastCrankRevolutions >= 0) {
                 float timeDifference;
                 if (lastCrankEventTime < mLastCrankEventTime)
@@ -459,13 +459,13 @@ public class MainActivitycxc extends AppCompatActivity implements BluetoothAdapt
                     crankCadence = 0;
                 }
                 mCadence.setText(String.format("%d rpm",(int)crankCadence));
+                mPower.setText(String.format("%d Watt",(int)Power));
             }
             mLastCrankRevolutions = crankRevolutions;
             mLastCrankEventTime = lastCrankEventTime;
         //}
             int b = characteristic.getValue()[0];
             Log.i(TAG,"Cadence");
-            Log.i(TAG, String.format("Cranck rev low:  0x%02X" , characteristic.getValue()[6]));
             Log.i(TAG, String.format("Cranck rev low:  0x%02X" , characteristic.getValue()[6]));
             Log.i(TAG, String.format("Cranck rev high: 0x%02X " , characteristic.getValue()[7]));
             Log.i(TAG, String.format("Last Cranck event time low: 0x%02X " , characteristic.getValue()[8]));
