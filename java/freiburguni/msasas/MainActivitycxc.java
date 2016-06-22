@@ -464,15 +464,7 @@ public class MainActivitycxc extends AppCompatActivity implements BluetoothAdapt
             mLastCrankRevolutions = crankRevolutions;
             mLastCrankEventTime = lastCrankEventTime;
         //}
-            int b = characteristic.getValue()[0];
-            Log.i(TAG,"Cadence");
-            Log.i(TAG, String.format("Cranck rev low:  0x%02X" , characteristic.getValue()[6]));
-            Log.i(TAG, String.format("Cranck rev high: 0x%02X " , characteristic.getValue()[7]));
-            Log.i(TAG, String.format("Last Cranck event time low: 0x%02X " , characteristic.getValue()[8]));
-            Log.i(TAG, String.format("Last Cranck event time high: 0x%02X " , characteristic.getValue()[9]));
-            Log.i(TAG,String.format("Cranck rev: %d ", characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT16,6)));
-            Log.i(TAG,String.format("Last cranck event time: %d ", characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT16,8)));
-
+       
 
     }
 
