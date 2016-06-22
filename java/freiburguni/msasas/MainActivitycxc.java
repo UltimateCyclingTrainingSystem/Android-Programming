@@ -15,17 +15,13 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.support.annotation.RequiresPermission;
-import android.support.annotation.StringDef;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.util.SparseArray;
-import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.Window;
 import android.widget.TextView;
 
 import java.util.List;
@@ -34,26 +30,33 @@ import java.util.UUID;
 public class MainActivitycxc extends AppCompatActivity implements BluetoothAdapter.LeScanCallback {
 
     private static final String TAG = "BluetoothGattActivity";
-    private static final String DEVICE_NAME = "PowerMeterBLE";
+  //  private static final String DEVICE_NAME = "PowerMet";
     private BluetoothAdapter btAdapter;
     private final static int REQUEST_ENABLE_BT = 10;
     // Arduino Power serivce and characterestic
-    private static final UUID Power_Service = UUID.fromString("19B10010-E8F2-537E-4F6C-D104768A1214");
-    private static final UUID Power_Data_Char = UUID.fromString("19B10011-E8F2-537E-4F6C-D104768A1214");
+    private static final UUID Power_Service = UUID.fromString("00001818-0000-1000-8000-00805f9b34fb");
+    private static final UUID Power_Data_Char = UUID.fromString("00002a63-0000-1000-8000-00805f9b34fb");
+    //private static final UUID descriptor_config = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
 
     private BluetoothGatt mConnectedGatt;
     // for all the discovered devices during the scan
     private SparseArray<BluetoothDevice> mDevices;
+    private TextView mCadence;
     private TextView mPower;
     private ProgressDialog mProgress;
+
+    private int mLastCrankEventTime = -1;
+    private int mLastCrankRevolutions = -1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
         setContentView(R.layout.activity_main_activitycxc);
         setProgressBarIndeterminate(true);
 
-        mPower = (TextView) findViewById(R.id.editText);
+        mCadence = (TextView) findViewById(R.id.cadencetxt);
+        mPower = (TextView) findViewById(R.id.powertxt);
 
         BluetoothManager btManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
         btAdapter = btManager.getAdapter();
@@ -62,24 +65,26 @@ public class MainActivitycxc extends AppCompatActivity implements BluetoothAdapt
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+          /*
+         * A progress dialog will be needed while the connection process is
+         * taking place
+         */
+        mProgress = new ProgressDialog(this);
+        mProgress.setIndeterminate(true);
+        mProgress.setCancelable(false);
+
     }
 
     @Override
     protected void onPause() {
         super.onPause();
         //Make sure dialog is hidden
-//        mProgress.dismiss(); MADE problems !! later maybe
+       // mProgress.dismiss(); //MADE problems !! later maybe
 
         //Cancel any scan in progress
-        //mHandler.removeCallbacks(mStopRunnable);
-        //mHandler.removeCallbacks(mStartRunnable);
-        //btAdapter.stopLeScan(this);
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-
+        mHandler.removeCallbacks(mStopRunnable);
+        mHandler.removeCallbacks(mStartRunnable);
+        btAdapter.stopLeScan(this);
     }
 
     @Override
@@ -91,15 +96,16 @@ public class MainActivitycxc extends AppCompatActivity implements BluetoothAdapt
             //Bluetooth is disabled
             Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableIntent, REQUEST_ENABLE_BT);
-            //finish();
-          //return;
+           // finish();
+            //return;
         }
         clearDisplayValues();
-
     }
 
     private void clearDisplayValues() {
-
+        Log.i(TAG,"Clearning Display");
+        mCadence.setText("-----------------");
+        mPower.setText("-----------------");
     }
 
     @Override
@@ -113,8 +119,6 @@ public class MainActivitycxc extends AppCompatActivity implements BluetoothAdapt
 
     }
 
-
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         //Add the scan option to the menu
@@ -124,7 +128,6 @@ public class MainActivitycxc extends AppCompatActivity implements BluetoothAdapt
             menu.add(0,mDevices.keyAt(i),0,mDevices.valueAt(i).getName());
         }
         return true;
-
     }
 
     @Override
@@ -144,9 +147,9 @@ public class MainActivitycxc extends AppCompatActivity implements BluetoothAdapt
                 Log.i(TAG,"Connecting to "+device.getName());
                 // make a connection with the device using the specific LE-specific
                 //connect GATT() method, passing in a callback for GAT events
-                mConnectedGatt = device.connectGatt(this,true,mGattCallback);
+                mConnectedGatt = device.connectGatt(this,true,mGattCallback); // or true ?
                 //Display progress UI
-                mHandler.sendMessage(Message.obtain(null,MSG_PROGRESS,"Connecting to " + device.getName()+"..."));
+              //  mHandler.sendMessage(Message.obtain(null,MSG_PROGRESS,"Connecting to " + device.getName()+"..."));
                 return super.onOptionsItemSelected(item);
         }
     }
@@ -169,7 +172,7 @@ public class MainActivitycxc extends AppCompatActivity implements BluetoothAdapt
         btAdapter.startLeScan(this);
         setProgressBarIndeterminateVisibility(true);
         Log.i(TAG,"Scanning");
-        mHandler.postDelayed(mStopRunnable, 5000); //stop scan after 5 seconds
+        mHandler.postDelayed(mStopRunnable, 1500); //stop scan after 5 seconds
     }
 
     private void stopScan() {
@@ -183,16 +186,16 @@ public class MainActivitycxc extends AppCompatActivity implements BluetoothAdapt
     @Override
     //rssi : receive signal strength of the device
     public void onLeScan(BluetoothDevice device, int rssi, byte[] scanRecord) {
-        Log.i(TAG, "New LE Device: " + device.getName() + " @ " + rssi);
+        Log.i(TAG, "New LE Device: " + device.getName() + " @ rssi:" + rssi);
         /*
          * We are looking for Arduino device, so validate the name
          * that each device reports before adding it to our collection
          */
-        if (DEVICE_NAME.equals(device.getName())) {
-            mDevices.put(device.hashCode(), device);
-            //Update the overflow menu
-            invalidateOptionsMenu();
-        }
+        mDevices.put(device.hashCode(), device);
+        //Update the overflow menu
+        invalidateOptionsMenu();
+
+
     }
 
     //Having a bluetooth device, next is trying to connect with it
@@ -210,6 +213,62 @@ public class MainActivitycxc extends AppCompatActivity implements BluetoothAdapt
             mState++;
         }
 
+
+       /* private void enableNextSensor(BluetoothGatt gatt) {
+            BluetoothGattCharacteristic characteristic;
+
+            switch (mState) {
+                case 0:
+
+                    Log.d(TAG, "Enabling Power");
+                    characteristic = gatt.getService(Power_Service)
+                            .getCharacteristic(Power_Data_Char);
+                    Log.d(TAG,characteristic.getUuid().toString());
+                    break;
+                case 1:
+                    Log.d(TAG, "Enabling Cadence");
+                    characteristic = gatt.getService(Cadence_Service)
+                            .getCharacteristic(Cadence_Data_Char);
+                    break;
+                default:
+                    mHandler.sendEmptyMessage(MSG_DISMISS);
+                    Log.i(TAG, "All Sensors Enabled");
+                    return;
+            }
+
+            gatt.readCharacteristic(characteristic);
+            //clearDisplayValues();
+            for(BluetoothGattDescriptor desc: characteristic.getDescriptors()) {
+                Log.i(TAG, "eh: " + desc.getUuid());
+            }
+
+        }*/
+
+
+       /* private void readNextSensor(BluetoothGatt gatt) {
+            BluetoothGattCharacteristic characteristic;
+            switch (mState) {
+                case 0:
+                    Log.d(TAG, "Reading pressure cal");
+                    characteristic = gatt.getService(Power_Service)
+                            .getCharacteristic(Power_Data_Char);
+                    break;
+                case 1:
+                    Log.d(TAG, "Reading pressure");
+                    characteristic = gatt.getService(Cadence_Service)
+                            .getCharacteristic(Cadence_Data_Char);
+                    break;
+
+                default:
+                    //mHandler.sendEmptyMessage(MSG_DISMISS);
+                    Log.i(TAG, "All Sensors Enabled 2");
+                    return;
+            }
+            gatt.writeCharacteristic(characteristic);
+        }*/
+
+
+
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
             //super.onConnectionStateChange(gatt, status, newState);
@@ -220,7 +279,7 @@ public class MainActivitycxc extends AppCompatActivity implements BluetoothAdapt
                 // before we can read and write their characteristics
                 Log.i(TAG,"Go discover the services...");
                 gatt.discoverServices(); // if successful, u will enter the OnServicesDiscovered function
-                mHandler.sendMessage(Message.obtain(null,MSG_PROGRESS,"Discovering Services..."));
+              // mHandler.sendMessage(Message.obtain(null, MSG_PROGRESS, "Discovering Services..."));
             }else if (status == BluetoothGatt.GATT_SUCCESS && newState == BluetoothProfile.STATE_DISCONNECTED){
                 //clear the UI values
                 Log.i(TAG," device disconnected u idiot...");
@@ -237,40 +296,58 @@ public class MainActivitycxc extends AppCompatActivity implements BluetoothAdapt
             //super.onServicesDiscovered(gatt, status);
             // this will get called after the client initiates a BluetoothGatt.discoverServices() call
             //get the list of services available in the device
+            Log.i(TAG,"Service discovered: "+ status);
             List<BluetoothGattService> services = gatt.getServices();
-            Log.i(TAG,"Service discovered: "+ services.toString());
-            for (BluetoothGattService service : services) {
-                List<BluetoothGattCharacteristic> characteristics = service.getCharacteristics();
-                Log.i(TAG,"Characteristics of Service "+service.toString()+ " : " + service.getCharacteristics().toString());
+            for(BluetoothGattService service:services){
+                Log.i(TAG,"Service UUID: " + service.getUuid());
+                for(BluetoothGattCharacteristic characteristic: service.getCharacteristics()){
+                    Log.i(TAG,"Characteristics UUID: " + characteristic.getUuid());
+                }
             }
-            BluetoothGattCharacteristic characteristic;
-            characteristic = gatt.getService(Power_Service).getCharacteristic(Power_Data_Char);
-            //try simple thing for our application
-            gatt.readCharacteristic(characteristic);
-        }
+
+            BluetoothGattCharacteristic Power_characteristic = gatt.getService(Power_Service)
+                    .getCharacteristic(Power_Data_Char);
+            gatt.setCharacteristicNotification(Power_characteristic,true);
+            //Enable remote notification
+            for(BluetoothGattDescriptor desc: Power_characteristic.getDescriptors()) {
+                desc.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+                gatt.writeDescriptor(desc);
+            }
+
+          //  mHandler.sendMessage(Message.obtain(null, MSG_PROGRESS, "Enabling Sensors... "));
+            //reset();
+            //enableNextSensor(gatt);
+            }
 
         @Override
         public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
-            super.onCharacteristicWrite(gatt, characteristic, status);
+           // super.onCharacteristicWrite(gatt, characteristic, status);
+            Log.i(TAG,"onCharacteristicWrite");
+            //readNextSensor(gatt);
         }
 
         @Override
         public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
-            super.onCharacteristicRead(gatt, characteristic, status);
+          /**  if(Power_Data_Char.equals(characteristic.getUuid())){
+                Log.i(TAG,"Finally");
+            }
+            else{
+                Log.i(TAG,"SAD");
+            }
+            //super.onCharacteristicRead(gatt, characteristic, status);
             Log.i(TAG,"onCharacteristicRead");
             mHandler.sendMessage(Message.obtain(null,MSG_POWER,characteristic));
             //enable notify to get any update on this sensor
             //Enable Local notification
             gatt.setCharacteristicNotification(characteristic,true);
             //Enable remote notification
-            Log.i(TAG, characteristic.getDescriptors().toString());
+            Log.i(TAG, "Descriptors: " + characteristic.getDescriptors());
             for(BluetoothGattDescriptor desc: characteristic.getDescriptors()){
                 //here u should find descriptor UUID that matches Client Characteristic Configuration (0x____)
                 // and then call setValue on that descriptor
                 desc.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
                 gatt.writeDescriptor(desc);
-            }
-
+            }*/
         }
 
 
@@ -282,18 +359,18 @@ public class MainActivitycxc extends AppCompatActivity implements BluetoothAdapt
             // after notifications are enabled, all updates from arduino on the characteristic values
             //will be posted here. Similar to read we hand this up to UI thread to update the display
             Log.i(TAG,"onCharacteristicChanged");
-            if(Power_Data_Char == characteristic.getUuid()){
+            //if(Power_Data_Char == characteristic.getUuid()){
                 mHandler.sendMessage(Message.obtain(null,MSG_POWER,characteristic));
-                Log.i(TAG,characteristic.getValue().toString());
-            }
+            //}
         }
 
 
         @Override
         public void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
             super.onDescriptorWrite(gatt, descriptor, status);
-            Log.i(TAG,"onDescriptorWrite");
+            Log.i(TAG,"onDescriptorWrite " + descriptor.getUuid().toString());
         }
+
 
         @Override
         public void onDescriptorRead(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
@@ -319,6 +396,7 @@ public class MainActivitycxc extends AppCompatActivity implements BluetoothAdapt
     private static final int MSG_POWER = 101;
     private static final int MSG_CLEAR = 102;
     private static final int MSG_PROGRESS = 103;
+    private static final int MSG_DISMISS = 104;
     private Handler mHandler = new Handler(){
         @Override
         public void handleMessage(Message msg) {
@@ -327,21 +405,26 @@ public class MainActivitycxc extends AppCompatActivity implements BluetoothAdapt
             switch (msg.what){
                 case MSG_POWER:
                     characteristic = (BluetoothGattCharacteristic) msg.obj;
+                    Log.i(TAG,"!!!!!!!!" + characteristic.getUuid().toString());
                     if(characteristic.getValue() == null){
                         Log.w(TAG,"Error updating Power value");
                         return;
                     }
+
                     updatePowerValue(characteristic);
                     break;
                 case MSG_PROGRESS:
                     mProgress.setMessage((String)msg.obj);
                     if(!mProgress.isShowing()){
                         mProgress.show();
-                        Log.i(TAG,"MSG_PROGREE in handling");
+                        Log.i(TAG,"MSG_PROGRESS in handling");
                     }
                     break;
                 case MSG_CLEAR:
                     clearDisplayValues();
+                    break;
+                case MSG_DISMISS:
+                    mProgress.hide();
                     break;
             }
         }
@@ -349,8 +432,48 @@ public class MainActivitycxc extends AppCompatActivity implements BluetoothAdapt
 
     // Method to extract the arduino data and update the UI
     private void updatePowerValue(BluetoothGattCharacteristic characteristic){
-        // see how can it be handled later (for now just check if it is reading anythin from ardunio)
-        Log.i(TAG,"updatePowerValue");
-        mPower.setText(characteristic.getValue().toString());
+        int value_offset =0;
+        int test = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT16,1);
+       // characteristic.getValue() // array of bytes
+        int flags = characteristic.getValue()[value_offset];
+        value_offset+=1;
+        boolean crank_revolutions_data_present = (flags & 0x02) >0;
+
+       // if(crank_revolutions_data_present){
+
+            Log.i(TAG,"craank rev data present");
+            final int crankRevolutions = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT16,6);
+            value_offset+=2;
+            final int lastCrankEventTime = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT16,8);
+
+            if (mLastCrankRevolutions >= 0) {
+                float timeDifference;
+                if (lastCrankEventTime < mLastCrankEventTime)
+                    timeDifference = (65535 + lastCrankEventTime - mLastCrankEventTime) / 1024.0f; // [s]
+                else
+                    timeDifference = (lastCrankEventTime - mLastCrankEventTime) / 1024.0f; // [s]
+
+                float crankCadence = (crankRevolutions - mLastCrankRevolutions) * 60.0f / timeDifference;
+
+                if((crankRevolutions-mLastCrankRevolutions)>=4){
+                    crankCadence = 0;
+                }
+                mCadence.setText(String.format("%d rpm",(int)crankCadence));
+            }
+            mLastCrankRevolutions = crankRevolutions;
+            mLastCrankEventTime = lastCrankEventTime;
+        //}
+            int b = characteristic.getValue()[0];
+            Log.i(TAG,"Cadence");
+            Log.i(TAG, String.format("Cranck rev low:  0x%02X" , characteristic.getValue()[6]));
+            Log.i(TAG, String.format("Cranck rev low:  0x%02X" , characteristic.getValue()[6]));
+            Log.i(TAG, String.format("Cranck rev high: 0x%02X " , characteristic.getValue()[7]));
+            Log.i(TAG, String.format("Last Cranck event time low: 0x%02X " , characteristic.getValue()[8]));
+            Log.i(TAG, String.format("Last Cranck event time high: 0x%02X " , characteristic.getValue()[9]));
+            Log.i(TAG,String.format("Cranck rev: %d ", characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT16,6)));
+            Log.i(TAG,String.format("Last cranck event time: %d ", characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT16,8)));
+
+
     }
+
 }
