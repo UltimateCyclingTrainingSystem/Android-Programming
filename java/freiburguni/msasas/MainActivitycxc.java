@@ -12,6 +12,7 @@ import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -21,9 +22,18 @@ import android.util.Log;
 import android.util.SparseArray;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.view.Window;
 import android.widget.TextView;
 
+import com.github.mikephil.charting.charts.BarChart;
+import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.components.YAxis;
+import com.github.mikephil.charting.data.BarData;
+import com.github.mikephil.charting.data.BarDataSet;
+import com.github.mikephil.charting.data.BarEntry;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -36,17 +46,26 @@ public class MainActivitycxc extends AppCompatActivity implements BluetoothAdapt
     // Arduino Power serivce and characterestic
     private static final UUID Power_Service = UUID.fromString("00001818-0000-1000-8000-00805f9b34fb");
     private static final UUID Power_Data_Char = UUID.fromString("00002a63-0000-1000-8000-00805f9b34fb");
-    //private static final UUID descriptor_config = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
 
     private BluetoothGatt mConnectedGatt;
     // for all the discovered devices during the scan
     private SparseArray<BluetoothDevice> mDevices;
-    private TextView mCadence;
-    private TextView mPower;
     private ProgressDialog mProgress;
 
     private int mLastCrankEventTime = -1;
     private int mLastCrankRevolutions = -1;
+
+    private BarChart CadenceBarChart;
+    private ArrayList<BarEntry> CadenceEntries;
+    private BarDataSet CadenceDataset;
+    private ArrayList<String> CadenceLabels;
+    private BarData CadenceData;
+
+    private BarChart PowerBarChart;
+    private ArrayList<BarEntry> PowerEntries;
+    private BarDataSet PowerDataset;
+    private ArrayList<String> PowerLabels;
+    private BarData PowerData;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,9 +73,6 @@ public class MainActivitycxc extends AppCompatActivity implements BluetoothAdapt
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
         setContentView(R.layout.activity_main_activitycxc);
         setProgressBarIndeterminate(true);
-
-        mCadence = (TextView) findViewById(R.id.cadencetxt);
-        mPower = (TextView) findViewById(R.id.powertxt);
 
         BluetoothManager btManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
         btAdapter = btManager.getAdapter();
@@ -73,6 +89,89 @@ public class MainActivitycxc extends AppCompatActivity implements BluetoothAdapt
         mProgress.setIndeterminate(true);
         mProgress.setCancelable(false);
 
+        //Cadence bar chart
+        CadenceBarChart = (BarChart)findViewById(R.id.cadencechart);
+        CadenceEntries = new ArrayList<>(); // yentries data
+        CadenceEntries.add(new BarEntry(0, 0));
+        CadenceDataset = new BarDataSet(CadenceEntries,"Cadence");
+        CadenceDataset.setColor(Color.WHITE);
+        CadenceDataset.setValueTextColor(Color.WHITE);
+        CadenceDataset.setValueTextSize(20f);
+        // creating labels
+        CadenceLabels = new ArrayList<String>(); //xentries
+        CadenceLabels.add("Power");
+
+        CadenceData = new BarData(CadenceLabels, CadenceDataset);
+        CadenceBarChart.setData(CadenceData); // set the data and list of lables into chart
+        CadenceBarChart.setDescription(null);
+        CadenceBarChart.setTouchEnabled(false);
+        CadenceBarChart.setNoDataTextDescription("Start Pedalling");
+        CadenceBarChart.setGridBackgroundColor(Color.TRANSPARENT);
+
+        //Y right axis
+        YAxis CadencerightAxis = CadenceBarChart.getAxisRight();
+        CadencerightAxis.setDrawLabels(false);
+        CadencerightAxis.setDrawAxisLine(false);
+        CadencerightAxis.setDrawGridLines(false);
+
+        //Y left axis
+        YAxis CadenceleftAxis = CadenceBarChart.getAxisLeft();
+        CadenceleftAxis.setDrawGridLines(false);
+        CadenceleftAxis.setDrawAxisLine(false);
+        CadenceleftAxis.setDrawLabels(false);
+        CadenceleftAxis.setAxisMaxValue(300f);
+        CadenceleftAxis.setAxisMinValue(0f);
+
+        //X axis
+        XAxis CadencexAxis = CadenceBarChart.getXAxis();
+        CadencexAxis.setDrawGridLines(false);
+        CadencexAxis.setDrawLabels(false);
+        CadencexAxis.setDrawAxisLine(false);
+       // CadenceBarChart.notifyDataSetChanged()
+
+        //Power bar chart
+        PowerBarChart = (BarChart)findViewById(R.id.powerchart);
+        PowerEntries = new ArrayList<>(); // yentries data
+        PowerEntries.add(new BarEntry(0, 0));
+        PowerDataset = new BarDataSet(CadenceEntries,"Power");
+        PowerDataset.setColor(Color.WHITE);
+        PowerDataset.setValueTextColor(Color.WHITE);
+        PowerDataset.setValueTextSize(20f);
+        // creating labels
+        PowerLabels = new ArrayList<String>(); //xentries
+        PowerLabels.add("Power");
+
+        PowerData = new BarData(PowerLabels, PowerDataset);
+        PowerBarChart.setData(PowerData); // set the data and list of lables into chart
+        PowerBarChart.setDescription(null);
+        PowerBarChart.setTouchEnabled(false);
+        PowerBarChart.setNoDataTextDescription("Start Pedalling");
+        PowerBarChart.setGridBackgroundColor(Color.TRANSPARENT);
+
+        //Y right axis
+        YAxis PowerrightAxis = PowerBarChart.getAxisRight();
+        PowerrightAxis.setDrawGridLines(false);
+        PowerrightAxis.setDrawLabels(false);
+        PowerrightAxis.setDrawAxisLine(false);
+
+        //Y left axis
+        YAxis PowerleftAxis = PowerBarChart.getAxisLeft();
+        PowerleftAxis.setDrawAxisLine(false);
+        PowerleftAxis.setDrawLabels(false);
+        PowerleftAxis.setDrawGridLines(false);
+        PowerleftAxis.setAxisMaxValue(10000f);
+        PowerleftAxis.setAxisMinValue(0f);
+
+        //X axis
+        XAxis PowerxAxis = PowerBarChart.getXAxis();
+        PowerxAxis.setDrawGridLines(false);
+        PowerxAxis.setDrawLabels(false);
+        PowerxAxis.setDrawAxisLine(false);
+        //PowerBarChart.notifyDataSetChanged()
+    }
+    public void pressme(View view){
+        Intent i = new Intent(this,Welcome.class);
+        startActivity(i);
     }
 
     @Override
@@ -104,8 +203,6 @@ public class MainActivitycxc extends AppCompatActivity implements BluetoothAdapt
 
     private void clearDisplayValues() {
         Log.i(TAG,"Clearning Display");
-        mCadence.setText("-----------------");
-        mPower.setText("-----------------");
     }
 
     @Override
@@ -116,7 +213,6 @@ public class MainActivitycxc extends AppCompatActivity implements BluetoothAdapt
             mConnectedGatt.disconnect();
             mConnectedGatt = null;
         }
-
     }
 
     @Override
@@ -172,7 +268,7 @@ public class MainActivitycxc extends AppCompatActivity implements BluetoothAdapt
         btAdapter.startLeScan(this);
         setProgressBarIndeterminateVisibility(true);
         Log.i(TAG,"Scanning");
-        mHandler.postDelayed(mStopRunnable, 1500); //stop scan after 5 seconds
+        mHandler.postDelayed(mStopRunnable, 1000); //stop scan after 5 seconds
     }
 
     private void stopScan() {
@@ -405,7 +501,6 @@ public class MainActivitycxc extends AppCompatActivity implements BluetoothAdapt
             switch (msg.what){
                 case MSG_POWER:
                     characteristic = (BluetoothGattCharacteristic) msg.obj;
-                    Log.i(TAG,"!!!!!!!!" + characteristic.getUuid().toString());
                     if(characteristic.getValue() == null){
                         Log.w(TAG,"Error updating Power value");
                         return;
@@ -432,40 +527,48 @@ public class MainActivitycxc extends AppCompatActivity implements BluetoothAdapt
 
     // Method to extract the arduino data and update the UI
     private void updatePowerValue(BluetoothGattCharacteristic characteristic){
-        int value_offset =0;
-        int test = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT16,1);
        // characteristic.getValue() // array of bytes
-        int flags = characteristic.getValue()[value_offset];
-        value_offset+=1;
-        boolean crank_revolutions_data_present = (flags & 0x02) >0;
-
-       // if(crank_revolutions_data_present){
-
-            Log.i(TAG,"craank rev data present");
-            final int crankRevolutions = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT16,6);
-            value_offset+=2;
-            final int lastCrankEventTime = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT16,8);
-            final float Power = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT16,2);
-            if (mLastCrankRevolutions >= 0) {
-                float timeDifference;
-                if (lastCrankEventTime < mLastCrankEventTime)
-                    timeDifference = (65535 + lastCrankEventTime - mLastCrankEventTime) / 1024.0f; // [s]
-                else
-                    timeDifference = (lastCrankEventTime - mLastCrankEventTime) / 1024.0f; // [s]
-
-                float crankCadence = (crankRevolutions - mLastCrankRevolutions) * 60.0f / timeDifference;
-
-                if((crankRevolutions-mLastCrankRevolutions)>=4){
-                    crankCadence = 0;
-                }
-                mCadence.setText(String.format("%d rpm",(int)crankCadence));
-                mPower.setText(String.format("%d Watt",(int)Power));
+        final int crankRevolutions = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT16,6);
+        final int lastCrankEventTime = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT16,8);
+        final float Power = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT16,2);
+        if (mLastCrankRevolutions >= 0) {
+            float timeDifference;
+            if (lastCrankEventTime < mLastCrankEventTime)
+                timeDifference = (65535 + lastCrankEventTime - mLastCrankEventTime) / 1024.0f; // [s]
+            else
+                timeDifference = (lastCrankEventTime - mLastCrankEventTime) / 1024.0f; // [s]
+            float crankCadence =0 ;
+            if(timeDifference != 0){
+                crankCadence= (crankRevolutions - mLastCrankRevolutions) * 60.0f / timeDifference;
             }
-            mLastCrankRevolutions = crankRevolutions;
-            mLastCrankEventTime = lastCrankEventTime;
-        //}
-       
+            if((crankRevolutions-mLastCrankRevolutions)>=4){
+                crankCadence = 0;
+            }
+            CadenceEntries.remove(0);
+            CadenceEntries.add(new BarEntry(crankCadence, 0));
+            CadenceDataset = new BarDataSet(CadenceEntries,"Cadence");
+            CadenceDataset.setColor(Color.WHITE);
+            CadenceDataset.setValueTextSize(20f);
+            CadenceDataset.setValueTextColor(Color.WHITE);
+            // creating labels
+            CadenceData = new BarData(CadenceLabels, CadenceDataset);
+            CadenceBarChart.notifyDataSetChanged();
+            CadenceBarChart.setData(CadenceData); // set the data and list of lables into chart
+            CadenceBarChart.invalidate();
 
+            PowerEntries.remove(0);
+            PowerEntries.add(new BarEntry(Power, 0));
+            PowerDataset = new BarDataSet(PowerEntries,"Power");
+            PowerDataset.setColor(Color.WHITE);
+            PowerDataset.setValueTextSize(20f);
+            PowerDataset.setValueTextColor(Color.WHITE);
+            // creating labels
+            PowerData = new BarData(PowerLabels, PowerDataset);
+            PowerBarChart.notifyDataSetChanged();
+            PowerBarChart.setData(PowerData); // set the data and list of lables into chart
+            PowerBarChart.invalidate();
+        }
+        mLastCrankRevolutions = crankRevolutions;
+        mLastCrankEventTime = lastCrankEventTime;
     }
-
 }
