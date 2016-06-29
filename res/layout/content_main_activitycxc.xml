@@ -8,6 +8,7 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
+    android:background="#721324"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
     tools:context="freiburguni.msasas.MainActivitycxc"
     tools:showIn="@layout/activity_main_activitycxc">
@@ -16,18 +17,45 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceLarge"
-        android:text="Power"
-        android:id="@+id/powertxt"
-        android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="70dp" />
+        android:text="Cadence"
+        android:id="@+id/cadenceplain"
+        android:layout_marginEnd="63dp"
+        android:layout_alignTop="@+id/Powerplain"
+        android:layout_alignParentEnd="true" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="New Text"
-        android:id="@+id/editText"
-        android:layout_centerVertical="true"
-        android:layout_alignStart="@+id/powertxt" />
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="Power"
+        android:id="@+id/Powerplain"
+        android:layout_marginBottom="76dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginStart="51dp" />
+
+    <com.github.mikephil.charting.charts.BarChart
+        android:id="@+id/cadencechart"
+        android:layout_width="100dp"
+        android:layout_height="400dp"
+        android:layout_alignParentTop="true"
+        android:layout_alignEnd="@+id/cadenceplain" />
+
+    <com.github.mikephil.charting.charts.BarChart
+        android:id="@+id/powerchart"
+        android:layout_width="100dp"
+        android:layout_height="400dp"
+        android:layout_alignParentTop="true"
+        android:layout_alignStart="@+id/Powerplain" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="New Button"
+        android:id="@+id/button"
+        android:layout_alignTop="@+id/cadencechart"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="46dp"
+        android:onClick="pressme" />
 
 </RelativeLayout>
