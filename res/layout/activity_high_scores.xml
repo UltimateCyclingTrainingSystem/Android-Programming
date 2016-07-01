@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    tools:context="freiburguni.msasas.HighScores"
+    android:background="#112323">
+
+    <ListView
+        android:layout_width="match_parent"
+        android:layout_height="400dp"
+        android:id="@+id/highscorelist"
+        android:layout_centerVertical="true"
+        android:layout_alignEnd="@+id/btnclearscores"></ListView>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="High Scores"
+        android:id="@+id/highscorestxt"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:textColor='#f401'
+        android:background="#3232"></TextView>
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Clearscores"
+        android:id="@+id/btnclearscores"
+        android:layout_below="@+id/highscorelist"
+        android:layout_toEndOf="@+id/highscorestxt"
+        android:background="#333"
+        android:width="200dp"
+        android:onClick="ClearScores"
+        android:nestedScrollingEnabled="true" />
+
+
+</RelativeLayout>
