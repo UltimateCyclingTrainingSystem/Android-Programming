@@ -7,16 +7,25 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    tools:context="freiburguni.msasas.PowerChallenge">
+    tools:context="freiburguni.msasas.PowerChallenge"
+    android:background="#FFFFFF"
+    android:contextClickable="true">
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/heart"
+        android:id="@+id/imageView"
+        android:layout_below="@+id/Powerplain"
+        android:layout_alignParentStart="true"
+        android:layout_alignEnd="@+id/powerchart" />
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceLarge"
         android:text="Cadence"
         android:id="@+id/cadenceplain"
-        android:layout_marginEnd="63dp"
         android:layout_alignTop="@+id/Powerplain"
-        android:layout_alignParentEnd="true" />
+        android:layout_alignStart="@+id/cadencechart" />
 
     <TextView
         android:layout_width="wrap_content"
@@ -24,22 +33,52 @@
         android:textAppearance="?android:attr/textAppearanceLarge"
         android:text="Power"
         android:id="@+id/Powerplain"
-        android:layout_marginBottom="76dp"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentStart="true"
-        android:layout_marginStart="51dp" />
+        android:layout_below="@+id/powerchart"
+        android:layout_alignParentStart="true" />
 
     <com.github.mikephil.charting.charts.BarChart
         android:id="@+id/cadencechart"
         android:layout_width="100dp"
-        android:layout_height="400dp"
+        android:layout_height="300dp"
         android:layout_alignParentTop="true"
-        android:layout_alignEnd="@+id/cadenceplain" />
+        android:layout_alignParentEnd="true" />
 
     <com.github.mikephil.charting.charts.BarChart
         android:id="@+id/powerchart"
         android:layout_width="100dp"
-        android:layout_height="400dp"
-        android:layout_alignParentTop="true"
-        android:layout_alignStart="@+id/Powerplain" />
+        android:layout_height="300dp"
+        android:layout_alignTop="@+id/cadencechart"
+        android:layout_alignParentStart="true" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="N/A"
+        android:id="@+id/hearttxt"
+        android:layout_below="@+id/imageView"
+        android:layout_alignEnd="@+id/Powerplain" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="Countdown Timer"
+        android:id="@+id/timertxt1"
+        android:textSize="20dp"
+        android:layout_below="@+id/cadenceplain"
+        android:layout_alignEnd="@+id/cadenceplain"
+        android:layout_marginTop="68dp"
+        android:textColor="@color/abc_input_method_navigation_guard" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="04:32"
+        android:id="@+id/timertxt"
+        android:layout_alignBottom="@+id/hearttxt"
+        android:layout_alignStart="@+id/timertxt1"
+        android:layout_marginStart="49dp"
+        android:textColor="@color/abc_input_method_navigation_guard" />
 </RelativeLayout>

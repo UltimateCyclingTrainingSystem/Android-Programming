@@ -10,21 +10,36 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
     tools:context="freiburguni.msasas.MainActivitycxc"
-    tools:showIn="@layout/activity_main_activitycxc">
+    tools:showIn="@layout/activity_main_activitycxc"
+    android:background="#FFFFFF">
+
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceLarge"
-        android:text="Device Found: 0"
+        android:text="Device(s) Found: 0"
         android:id="@+id/devicesfound"
         android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true" />
+        android:layout_centerHorizontal="true"
+        android:backgroundTint="#00bfff"
+        android:autoText="true"
+        android:textColor="#001319" />
     <ListView
-        android:layout_width="match_parent"
-        android:layout_height="400dp"
+        android:layout_width="350dp"
+        android:layout_height="350dp"
         android:id="@+id/mylist"
         android:layout_centerVertical="true"
-        android:layout_alignParentStart="true"></ListView>
+        android:layout_centerHorizontal="true"></ListView>
+
+    <ImageButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bike"
+        android:id="@+id/workoutbtn"
+        android:onClick="GoWorkout"
+        android:layout_toEndOf="@+id/devicesfound"
+        android:layout_above="@+id/mylist"
+        android:layout_below="@+id/devicesfound" />
 
 
 </RelativeLayout>
