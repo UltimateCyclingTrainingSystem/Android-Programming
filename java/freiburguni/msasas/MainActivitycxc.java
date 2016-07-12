@@ -7,6 +7,7 @@ import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothManager;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -14,9 +15,11 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.util.SparseArray;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -33,7 +36,7 @@ public class MainActivitycxc extends AppCompatActivity implements BluetoothAdapt
     private ListView list;
     private ArrayAdapter<String> adapter;
     private ArrayList<String> arrayList;
-
+    private Intent intent;
     private TextView devicesfound;
 
     private static final String TAG = "BluetoothGattActivity";
@@ -60,10 +63,21 @@ public class MainActivitycxc extends AppCompatActivity implements BluetoothAdapt
         arrayList = new ArrayList<String>();
         // Adapter: You need three parameters 'the context, id of the layout (it will be where the data is shown),
         // and the array that contains the data
-        adapter = new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_spinner_item, arrayList);
+        adapter = new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_spinner_item, arrayList){
+            @Override
+            public View getView(int position, View convertView, ViewGroup parent) {
+                View view = super.getView(position,convertView,parent);
+                TextView tv = (TextView) view.findViewById(android.R.id.text1);
+                tv.setTextColor(Color.BLACK);
+                tv.setTextSize(25f);
+                return view;
+            }
+        };
         // Here, you set the data in your ListView
+
         list.setAdapter(adapter);
 
+        intent = new Intent(MainActivitycxc.this, Welcome.class);
         BluetoothManager btManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
         btAdapter = btManager.getAdapter();
 
@@ -80,17 +94,41 @@ public class MainActivitycxc extends AppCompatActivity implements BluetoothAdapt
         mProgress.setCancelable(false);
 
         list.setOnItemClickListener(
-            new AdapterView.OnItemClickListener(){
-                @Override
-                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                    //Obtain the discovered device to connect with
-                    BluetoothDevice device = mDevices.valueAt(position);
-                    Intent i = new Intent(MainActivitycxc.this,Welcome.class);
-                    i.putExtra("btdevice",device);
-                    startActivity(i);
+                new AdapterView.OnItemClickListener(){
+                    @Override
+                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                        //Obtain the discovered device to connect with
+                        BluetoothDevice device = mDevices.valueAt(position);
+                        if(device.getName().toString().equals("heart rate sensor")) {
+                            if (intent.hasExtra("heart")) {
+                                Toast.makeText(MainActivitycxc.this, device.getName().toString() + " already added", Toast.LENGTH_SHORT).show();
+                            } else {
+                                intent.putExtra("heart", device);
+                                Toast.makeText(MainActivitycxc.this, device.getName().toString() + " added to workout", Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                        else{
+                            if (intent.hasExtra("power")) {
+                                Toast.makeText(MainActivitycxc.this, device.getName().toString() + " already added", Toast.LENGTH_SHORT).show();
+                            } else {
+                                intent.putExtra("power", device);
+                                Toast.makeText(MainActivitycxc.this, device.getName().toString() + " added to workout", Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                    }
+
                 }
-            }
         );
+    }
+
+    public void GoWorkout(View view){
+        if(intent.hasExtra("heart") || intent.hasExtra("power")){
+            startActivity(intent);
+        }
+        else
+        {
+            Toast.makeText(this,"Choose at least one sensor",Toast.LENGTH_SHORT).show();
+        }
     }
 
     @Override
@@ -214,7 +252,7 @@ public class MainActivitycxc extends AppCompatActivity implements BluetoothAdapt
                         arrayList.add(mDevices.valueAt(i).getName().toString());
                         adapter.notifyDataSetChanged();
                     }
-                    devicesfound.setText("Device Found: "+ mDevices.size());
+                    devicesfound.setText("Device(s) Found: "+ mDevices.size());
                     break;
             }
         }

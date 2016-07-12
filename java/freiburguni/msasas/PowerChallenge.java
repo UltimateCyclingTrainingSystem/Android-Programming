@@ -8,12 +8,15 @@ import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothProfile;
+import android.content.res.ColorStateList;
 import android.graphics.Color;
+import android.nfc.Tag;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.github.mikephil.charting.charts.BarChart;
@@ -23,6 +26,8 @@ import com.github.mikephil.charting.data.BarData;
 import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
 
+import org.w3c.dom.Text;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -31,6 +36,10 @@ public class PowerChallenge extends AppCompatActivity {
 
     private static final UUID Power_Service = UUID.fromString("00001818-0000-1000-8000-00805f9b34fb");
     private static final UUID Power_Data_Char = UUID.fromString("00002a63-0000-1000-8000-00805f9b34fb");
+    private static final UUID Heart_rate_Service = UUID.fromString("0000180D-0000-1000-8000-00805f9b34fb");
+    private static final UUID Heart_rate_Char = UUID.fromString("00002A37-0000-1000-8000-00805f9b34fb");
+
+    private int mState = 0;
 
     private BarChart CadenceBarChart;
     private ArrayList<BarEntry> CadenceEntries;
@@ -43,6 +52,9 @@ public class PowerChallenge extends AppCompatActivity {
     private BarDataSet PowerDataset;
     private ArrayList<String> PowerLabels;
     private BarData PowerData;
+
+    private TextView Heart_Rate;
+
 
     private int mLastCrankEventTime = -1;
     private int mLastCrankRevolutions = -1;
@@ -62,18 +74,27 @@ public class PowerChallenge extends AppCompatActivity {
             Log.i(TAG,"WHYYYYYY");
             return;
         }
-        BluetoothDevice device = getIntent().getExtras().getParcelable("btdevice");
-        Log.i(TAG,"POWER CHALLENGE " + device.getName().toString());
-        mConnectedGatt = device.connectGatt(this,true,mGattCallback); // or true ?
+        if(getIntent().hasExtra("heart")) {
+            BluetoothDevice HeartRatedevice = getIntent().getExtras().getParcelable("heart");
+            Log.i(TAG, "POWER CHALLENGE " + HeartRatedevice.getName().toString());
+            mConnectedGatt = HeartRatedevice.connectGatt(this, true, mGattCallback); // or true ?
+        }
+        if(getIntent().hasExtra("power")){
+            BluetoothDevice Powerdevice = getIntent().getExtras().getParcelable("power");
+            Log.i(TAG, "POWER CHALLENGE " + Powerdevice.getName().toString());
+            mConnectedGatt = Powerdevice.connectGatt(this, true, mGattCallback); // or true ?
+        }
 
-
+        Heart_Rate = (TextView)findViewById(R.id.hearttxt);
+        Heart_Rate.setTextColor(Color.BLACK);
+        Heart_Rate.setTextSize(20f);
         //Cadence bar chart
         CadenceBarChart = (BarChart)findViewById(R.id.cadencechart);
         CadenceEntries = new ArrayList<>(); // yentries data
-        CadenceEntries.add(new BarEntry(0, 0));
+        CadenceEntries.add(new BarEntry(0,0));
         CadenceDataset = new BarDataSet(CadenceEntries,"Cadence");
-        CadenceDataset.setColor(Color.WHITE);
-        CadenceDataset.setValueTextColor(Color.WHITE);
+        CadenceDataset.setColor(Color.BLACK);
+        CadenceDataset.setValueTextColor(Color.BLACK);
         CadenceDataset.setValueTextSize(20f);
         // creating labels
         CadenceLabels = new ArrayList<String>(); //xentries
@@ -110,10 +131,10 @@ public class PowerChallenge extends AppCompatActivity {
         //Power bar chart
         PowerBarChart = (BarChart)findViewById(R.id.powerchart);
         PowerEntries = new ArrayList<>(); // yentries data
-        PowerEntries.add(new BarEntry(0, 0));
-        PowerDataset = new BarDataSet(CadenceEntries,"Power");
-        PowerDataset.setColor(Color.WHITE);
-        PowerDataset.setValueTextColor(Color.WHITE);
+        PowerEntries.add(new BarEntry(0,0));
+        PowerDataset = new BarDataSet(PowerEntries,"Power");
+        PowerDataset.setColor(Color.BLACK);
+        PowerDataset.setValueTextColor(Color.BLACK);
         PowerDataset.setValueTextSize(20f);
         // creating labels
         PowerLabels = new ArrayList<String>(); //xentries
@@ -153,11 +174,17 @@ public class PowerChallenge extends AppCompatActivity {
     }
 
     // Method to extract the arduino data and update the UI
+    private void updateHeartRateValue(BluetoothGattCharacteristic characteristic){
+        final int heart_rate_value =  characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8,1);
+        Heart_Rate.setText(String.valueOf(heart_rate_value));
+    }
+
     private void updatePowerValue(BluetoothGattCharacteristic characteristic){
         // characteristic.getValue() // array of bytes
         final int crankRevolutions = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT16,6);
         final int lastCrankEventTime = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT16,8);
         final float Power = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT16,2);
+
         if (mLastCrankRevolutions >= 0) {
             float timeDifference;
             if (lastCrankEventTime < mLastCrankEventTime)
@@ -171,12 +198,14 @@ public class PowerChallenge extends AppCompatActivity {
             if((crankRevolutions-mLastCrankRevolutions)>=4){
                 crankCadence = 0;
             }
+            Log.i(TAG,"POWER: " + String.valueOf(Power));
+            Log.i(TAG,"Cadence: " + String.valueOf(crankCadence));
             CadenceEntries.remove(0);
             CadenceEntries.add(new BarEntry(crankCadence, 0));
             CadenceDataset = new BarDataSet(CadenceEntries,"Cadence");
-            CadenceDataset.setColor(Color.WHITE);
+            CadenceDataset.setColor(Color.BLACK);
             CadenceDataset.setValueTextSize(20f);
-            CadenceDataset.setValueTextColor(Color.WHITE);
+            CadenceDataset.setValueTextColor(Color.BLACK);
             // creating labels
             CadenceData = new BarData(CadenceLabels, CadenceDataset);
             CadenceBarChart.notifyDataSetChanged();
@@ -186,9 +215,9 @@ public class PowerChallenge extends AppCompatActivity {
             PowerEntries.remove(0);
             PowerEntries.add(new BarEntry(Power, 0));
             PowerDataset = new BarDataSet(PowerEntries,"Power");
-            PowerDataset.setColor(Color.WHITE);
+            PowerDataset.setColor(Color.BLACK);
             PowerDataset.setValueTextSize(20f);
-            PowerDataset.setValueTextColor(Color.WHITE);
+            PowerDataset.setValueTextColor(Color.BLACK);
             // creating labels
             PowerData = new BarData(PowerLabels, PowerDataset);
             PowerBarChart.notifyDataSetChanged();
@@ -227,32 +256,48 @@ public class PowerChallenge extends AppCompatActivity {
             }
         }
 
+
         @Override
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
             //super.onServicesDiscovered(gatt, status);
             // this will get called after the client initiates a BluetoothGatt.discoverServices() call
             //get the list of services available in the device
+            boolean heartsensor = false;
+            boolean powersensor = false;
             Log.i(TAG,"Service discovered: "+ status);
             List<BluetoothGattService> services = gatt.getServices();
             for(BluetoothGattService service:services){
                 Log.i(TAG,"Service UUID: " + service.getUuid());
                 for(BluetoothGattCharacteristic characteristic: service.getCharacteristics()){
                     Log.i(TAG,"Characteristics UUID: " + characteristic.getUuid());
+                    if(Power_Data_Char.equals(characteristic.getUuid())){
+                        powersensor = true;
+                    }
+                    if(Heart_rate_Char.equals(characteristic.getUuid())){
+                        heartsensor = true;
+                    }
                 }
             }
 
-            BluetoothGattCharacteristic Power_characteristic = gatt.getService(Power_Service)
-                    .getCharacteristic(Power_Data_Char);
-            gatt.setCharacteristicNotification(Power_characteristic,true);
-            //Enable remote notification
-            for(BluetoothGattDescriptor desc: Power_characteristic.getDescriptors()) {
-                desc.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-                gatt.writeDescriptor(desc);
+            if(powersensor){
+                BluetoothGattCharacteristic Power_characteristic = gatt.getService(Power_Service)
+                        .getCharacteristic(Power_Data_Char);
+                gatt.setCharacteristicNotification(Power_characteristic,true);
+                 for(BluetoothGattDescriptor desc: Power_characteristic.getDescriptors()) {
+                    desc.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+                  gatt.writeDescriptor(desc);
+                }
             }
+            if(heartsensor){
+                BluetoothGattCharacteristic Heart_rate_characteristic = gatt.getService(Heart_rate_Service)
+                        .getCharacteristic(Heart_rate_Char);
+                gatt.setCharacteristicNotification(Heart_rate_characteristic,true);
+                for(BluetoothGattDescriptor desc: Heart_rate_characteristic.getDescriptors()) {
+                    desc.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+                    gatt.writeDescriptor(desc);
+                }
 
-            //  mHandler.sendMessage(Message.obtain(null, MSG_PROGRESS, "Enabling Sensors... "));
-            //reset();
-            //enableNextSensor(gatt);
+            }
         }
 
         @Override
@@ -261,10 +306,14 @@ public class PowerChallenge extends AppCompatActivity {
             // this will get called anytime you perform a read or write characteristic operation
             // after notifications are enabled, all updates from arduino on the characteristic values
             //will be posted here. Similar to read we hand this up to UI thread to update the display
-            Log.i(TAG,"onCharacteristicChanged");
-            //if(Power_Data_Char == characteristic.getUuid()){
-            mHandler.sendMessage(Message.obtain(null,MSG_POWER,characteristic));
-            //}
+            Log.i(TAG,"onCharacteristicChanged UUID: " + characteristic.getUuid());
+            if(Heart_rate_Char.equals(characteristic.getUuid())){
+            mHandler.sendMessage(Message.obtain(null,MSG_HEART_RATE,characteristic));
+            }
+            if(Power_Data_Char.equals(characteristic.getUuid())){
+                mHandler.sendMessage(Message.obtain(null,MSG_POWER,characteristic));
+            }
+
         }
 
 
@@ -296,10 +345,10 @@ public class PowerChallenge extends AppCompatActivity {
     };
 
     private static final int MSG_POWER = 101;
-    private static final int MSG_CLEAR = 102;
-    private static final int MSG_PROGRESS = 103;
-    private static final int MSG_DISMISS = 104;
-    private static final int MSG_LIST = 105;
+    private static final int MSG_HEART_RATE = 102;
+    private static final int MSG_CLEAR = 103;
+    private static final int MSG_PROGRESS = 104;
+    private static final int MSG_DISMISS = 105;
     private Handler mHandler = new Handler(){
         @Override
         public void handleMessage(Message msg) {
@@ -312,8 +361,19 @@ public class PowerChallenge extends AppCompatActivity {
                         Log.w(TAG,"Error updating Power value");
                         return;
                     }
+
                     updatePowerValue(characteristic);
                     break;
+
+                case MSG_HEART_RATE:
+                    characteristic = (BluetoothGattCharacteristic) msg.obj;
+                    if(characteristic.getValue() == null){
+                        Log.w(TAG,"Error updating Heart rate value");
+                        return;
+                    }
+                    updateHeartRateValue(characteristic);
+                    break;
+
                 case MSG_PROGRESS:
                     mProgress.setMessage((String)msg.obj);
                     if(!mProgress.isShowing()){
@@ -321,9 +381,11 @@ public class PowerChallenge extends AppCompatActivity {
                         Log.i(TAG,"MSG_PROGRESS in handling");
                     }
                     break;
+
                 case MSG_CLEAR:
                     clearDisplayValues();
                     break;
+
                 case MSG_DISMISS:
                     mProgress.hide();
                     break;

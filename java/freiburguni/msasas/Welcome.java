@@ -6,24 +6,39 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.Toast;
 
 public class Welcome extends AppCompatActivity {
 
-    private BluetoothDevice device;
+    private BluetoothDevice Powerdevice;
+    private BluetoothDevice HeartRatedevice;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_welcome);
         Bundle mainmenuData = getIntent().getExtras();
-        if(mainmenuData == null){
+        if (mainmenuData == null) {
             return;
         }
-        device = getIntent().getExtras().getParcelable("btdevice");
+        if(getIntent().hasExtra("heart")){
+            HeartRatedevice = getIntent().getExtras().getParcelable("heart");
+        }
+
+        if(getIntent().hasExtra("power")){
+            Powerdevice = getIntent().getExtras().getParcelable("power");
+        }
+
     }
 
     public void Challenge(View view){
         Intent i = new Intent(this,PowerChallenge.class);
-        i.putExtra("btdevice",device);
+        if(getIntent().hasExtra("heart")){
+            i.putExtra("heart",HeartRatedevice);
+        }
+
+        if(getIntent().hasExtra("power")){
+            i.putExtra("power",Powerdevice);
+        }
         startActivity(i);
     }
 

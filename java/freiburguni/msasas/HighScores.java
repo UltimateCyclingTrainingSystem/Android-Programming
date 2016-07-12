@@ -41,4 +41,3 @@ public class HighScores extends AppCompatActivity {
     }
 
 }
-
