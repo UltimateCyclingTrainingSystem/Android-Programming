@@ -12,12 +12,14 @@ public class Welcome extends AppCompatActivity {
 
     private BluetoothDevice Powerdevice;
     private BluetoothDevice HeartRatedevice;
+    private static final String TAG = "BluetoothGattActivity";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_welcome);
         Bundle mainmenuData = getIntent().getExtras();
         if (mainmenuData == null) {
+            Log.i(TAG,"Wala3");
             return;
         }
         if(getIntent().hasExtra("heart")){

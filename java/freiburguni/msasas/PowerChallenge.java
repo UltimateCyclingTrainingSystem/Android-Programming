@@ -1,5 +1,7 @@
 package freiburguni.msasas;
 
+import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
@@ -8,9 +10,12 @@ import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothProfile;
+import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.nfc.Tag;
+import android.os.Build;
+import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
@@ -31,6 +36,10 @@ import org.w3c.dom.Text;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+
+@TargetApi(Build.VERSION_CODES.GINGERBREAD)
+@SuppressLint("NewApi")
 
 public class PowerChallenge extends AppCompatActivity {
 
@@ -38,8 +47,12 @@ public class PowerChallenge extends AppCompatActivity {
     private static final UUID Power_Data_Char = UUID.fromString("00002a63-0000-1000-8000-00805f9b34fb");
     private static final UUID Heart_rate_Service = UUID.fromString("0000180D-0000-1000-8000-00805f9b34fb");
     private static final UUID Heart_rate_Char = UUID.fromString("00002A37-0000-1000-8000-00805f9b34fb");
+    TextView textViewTime;
+    private static float avgPower;
+    private static int PowerInputs;
 
-    private int mState = 0;
+    private BluetoothDevice HeartRatedevice;
+    private BluetoothDevice Powerdevice;
 
     private BarChart CadenceBarChart;
     private ArrayList<BarEntry> CadenceEntries;
@@ -69,18 +82,26 @@ public class PowerChallenge extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_power_challenge);
+        avgPower = 0;
+        PowerInputs = 0;
+
+        Log.i(TAG,"avgerage Power: "+ String.valueOf(avgPower));
+        textViewTime = (TextView) findViewById(R.id.textViewTime);
+        textViewTime.setText("00:05:00");
+        final CounterClass timer = new CounterClass(10000,1000);
+        timer.start();
         Bundle mainmenuData = getIntent().getExtras();
         if(mainmenuData == null){
             Log.i(TAG,"WHYYYYYY");
             return;
         }
         if(getIntent().hasExtra("heart")) {
-            BluetoothDevice HeartRatedevice = getIntent().getExtras().getParcelable("heart");
+            HeartRatedevice = getIntent().getExtras().getParcelable("heart");
             Log.i(TAG, "POWER CHALLENGE " + HeartRatedevice.getName().toString());
             mConnectedGatt = HeartRatedevice.connectGatt(this, true, mGattCallback); // or true ?
         }
         if(getIntent().hasExtra("power")){
-            BluetoothDevice Powerdevice = getIntent().getExtras().getParcelable("power");
+            Powerdevice = getIntent().getExtras().getParcelable("power");
             Log.i(TAG, "POWER CHALLENGE " + Powerdevice.getName().toString());
             mConnectedGatt = Powerdevice.connectGatt(this, true, mGattCallback); // or true ?
         }
@@ -169,6 +190,53 @@ public class PowerChallenge extends AppCompatActivity {
         //PowerBarChart.notifyDataSetChanged()
     }
 
+    @TargetApi(Build.VERSION_CODES.GINGERBREAD)
+    @SuppressLint("NewApi")
+    public class CounterClass extends CountDownTimer{
+
+        /**
+         * @param millisInFuture    The number of millis in the future from the call
+         *                          to {@link #start()} until the countdown is done and {@link #onFinish()}
+         *                          is called.
+         * @param countDownInterval The interval along the way to receive
+         *                          {@link #onTick(long)} callbacks.
+         */
+        public CounterClass(long millisInFuture, long countDownInterval) {
+            super(millisInFuture, countDownInterval);
+        }
+
+        @SuppressLint("NewApi")
+        @TargetApi(Build.VERSION_CODES.GINGERBREAD)
+
+        @Override
+        public void onTick(long millisUntilFinished) {
+            long millis = millisUntilFinished;
+            String hms = String.format("%02d:%02d:%02d", TimeUnit.MILLISECONDS.toHours(millis),
+                    TimeUnit.MILLISECONDS.toMinutes(millis) - TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(millis)),
+                    TimeUnit.MILLISECONDS.toSeconds(millis)-TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(millis)));
+            System.out.println(hms);
+            textViewTime.setText(hms);
+
+        }
+
+        @Override
+        public void onFinish() {
+            Intent i = new Intent(PowerChallenge.this,Welcome.class);
+            if(getIntent().hasExtra("heart")){
+                i.putExtra("heart",HeartRatedevice);
+            }
+
+            if(getIntent().hasExtra("power")){
+                i.putExtra("power",Powerdevice);
+            }
+            avgPower = (float)avgPower/PowerInputs;
+            if(PowerInputs == 0){
+                avgPower = 0;
+            }
+            Log.i(TAG,"Average Power: " + String.valueOf(avgPower));
+            startActivity(i);
+        }
+    }
     private void clearDisplayValues() {
         Log.i(TAG,"Clearning Display");
     }
@@ -184,6 +252,9 @@ public class PowerChallenge extends AppCompatActivity {
         final int crankRevolutions = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT16,6);
         final int lastCrankEventTime = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT16,8);
         final float Power = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT16,2);
+        avgPower+=Power;
+        PowerInputs++;
+        Log.i(TAG,"Entry number: " + String.valueOf(PowerInputs) + ", absolute Power: "+ String.valueOf(Power));
 
         if (mLastCrankRevolutions >= 0) {
             float timeDifference;
@@ -267,9 +338,9 @@ public class PowerChallenge extends AppCompatActivity {
             Log.i(TAG,"Service discovered: "+ status);
             List<BluetoothGattService> services = gatt.getServices();
             for(BluetoothGattService service:services){
-                Log.i(TAG,"Service UUID: " + service.getUuid());
+             //   Log.i(TAG,"Service UUID: " + service.getUuid());
                 for(BluetoothGattCharacteristic characteristic: service.getCharacteristics()){
-                    Log.i(TAG,"Characteristics UUID: " + characteristic.getUuid());
+               //     Log.i(TAG,"Characteristics UUID: " + characteristic.getUuid());
                     if(Power_Data_Char.equals(characteristic.getUuid())){
                         powersensor = true;
                     }

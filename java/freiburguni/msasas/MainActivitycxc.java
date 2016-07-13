@@ -213,7 +213,7 @@ public class MainActivitycxc extends AppCompatActivity implements BluetoothAdapt
         btAdapter.startLeScan(this);
         setProgressBarIndeterminateVisibility(true);
         Toast.makeText(this,"Scanning",Toast.LENGTH_SHORT).show();
-        mHandler.postDelayed(mStopRunnable, 1000); //stop scan after 5 seconds
+        mHandler.postDelayed(mStopRunnable, 1000); //stop scan after 1 seconds
     }
 
     private void stopScan() {
