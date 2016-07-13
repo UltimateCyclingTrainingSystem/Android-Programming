@@ -8,7 +8,8 @@
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="freiburguni.msasas.Welcome"
-    android:background="#FFFFFF">
+    android:background="#FFFFFF"
+    android:onClick="MainMenu">
 
 
     <Button
@@ -17,34 +18,45 @@
         android:text="Power Challenge "
         android:id="@+id/powerchallengebtn"
         android:onClick="Challenge"
-        android:layout_marginTop="76dp"
         android:width="200dp"
+        android:background="#00bfff"
+        android:layout_marginTop="68dp"
         android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true"
-        android:background="#00bfff" />
+        android:layout_alignStart="@+id/cycling" />
 
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Cycling"
         android:id="@+id/cycling"
-        android:layout_marginTop="78dp"
         android:width="200dp"
+        android:background="#00bfff"
+        android:layout_marginTop="78dp"
         android:layout_below="@+id/powerchallengebtn"
-        android:layout_alignStart="@+id/powerchallengebtn"
-        android:background="#00bfff" />
+        android:layout_centerHorizontal="true" />
 
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="High Scores"
         android:id="@+id/highscores"
-        android:layout_marginTop="86dp"
+        android:layout_marginTop="68dp"
         android:width="200dp"
-        android:layout_below="@+id/cycling"
-        android:layout_alignStart="@+id/powerchallengebtn"
         android:background="#00bfff"
-        android:onClick="HighScores" />
+        android:onClick="HighScores"
+        android:layout_below="@+id/cycling"
+        android:layout_alignStart="@+id/cycling" />
+
+    <Button
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        android:text="Main Menu"
+        android:id="@+id/mainmennubtn"
+        android:background="#00bfff"
+        android:layout_marginTop="68dp"
+        android:layout_below="@+id/highscores"
+        android:layout_alignStart="@+id/highscores"
+        android:onClick="MainMenu" />
 
 
 </RelativeLayout>

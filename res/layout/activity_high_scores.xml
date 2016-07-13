@@ -8,7 +8,7 @@
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="freiburguni.msasas.HighScores"
-    android:background="#112323">
+    android:background="#FFFFFF">
 
     <ListView
         android:layout_width="match_parent"
@@ -25,8 +25,7 @@
         android:id="@+id/highscorestxt"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
-        android:textColor='#f401'
-        android:background="#3232"></TextView>
+        android:textColor="#00bfff"></TextView>
 
     <Button
         android:layout_width="wrap_content"
@@ -35,7 +34,7 @@
         android:id="@+id/btnclearscores"
         android:layout_below="@+id/highscorelist"
         android:layout_toEndOf="@+id/highscorestxt"
-        android:background="#333"
+        android:background="#00bfff"
         android:width="200dp"
         android:onClick="ClearScores"
         android:nestedScrollingEnabled="true" />

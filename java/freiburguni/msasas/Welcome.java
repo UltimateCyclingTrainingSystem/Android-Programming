@@ -30,6 +30,8 @@ public class Welcome extends AppCompatActivity {
             Powerdevice = getIntent().getExtras().getParcelable("power");
         }
 
+
+
     }
 
     public void Challenge(View view){
@@ -42,11 +44,32 @@ public class Welcome extends AppCompatActivity {
             i.putExtra("power",Powerdevice);
         }
         startActivity(i);
+        finish();
     }
 
     public void HighScores(View view){
         Intent i = new Intent(this,HighScores.class);
+        if(getIntent().hasExtra("heart")){
+            i.putExtra("heart",HeartRatedevice);
+        }
+
+        if(getIntent().hasExtra("power")){
+            i.putExtra("power",Powerdevice);
+        }
         startActivity(i);
+        finish();
     }
 
+    public void MainMenu(View view){
+        Intent i = new Intent(this,MainActivitycxc.class);
+        startActivity(i);
+        finish();
+    }
+
+    @Override
+    public void onBackPressed() {
+        Intent i = new Intent(this,MainActivitycxc.class);
+        startActivity(i);
+        finish();
+    }
 }
