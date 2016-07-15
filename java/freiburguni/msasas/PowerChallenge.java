@@ -53,11 +53,12 @@ public class PowerChallenge extends AppCompatActivity {
     TextView textViewTime;
     private static float avgPower;
     private static int PowerInputs;
-
+    private  int checkCounter = 0;
+    private float crankCadence= 0;
     private String cyclerName;
     private BluetoothDevice HeartRatedevice;
     private BluetoothDevice Powerdevice;
-
+    private boolean dialogShowing;
     private BarChart CadenceBarChart;
     private ArrayList<BarEntry> CadenceEntries;
     private BarDataSet CadenceDataset;
@@ -73,20 +74,33 @@ public class PowerChallenge extends AppCompatActivity {
     private TextView Heart_Rate;
 
 
-    private int mLastCrankEventTime = -1;
-    private int mLastCrankRevolutions = -1;
+    private int mLastCrankEventTime = 0;
+    private int mLastCrankRevolutions = 0;
 
-    private BluetoothGatt mConnectedGatt;
+    private BluetoothGatt HeartRateConnectedGatt;
+    private BluetoothGatt PowerConnectedGatt;
     private static final String TAG = "BluetoothGattActivity";
 
     private ProgressDialog mProgress;
     private CounterClass timer;
-    private int firstCharacChange = 0;
     private AlertDialog.Builder dialogBuilder;
     @Override
     protected void onPause() {
         super.onPause();
-        finish();
+        timer.cancel();
+
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if(dialogShowing)
+            return;
+        else{
+            avgPower = 0;
+            PowerInputs = 0;
+            timer.start();
+        }
     }
 
     @Override
@@ -96,15 +110,16 @@ public class PowerChallenge extends AppCompatActivity {
                 .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        mConnectedGatt.close();
                         timer.cancel();
                         Intent i = new Intent(PowerChallenge.this,Welcome.class);
                         if(getIntent().hasExtra("heart")){
                             i.putExtra("heart",HeartRatedevice);
+                            HeartRateConnectedGatt.close();
                         }
 
                         if(getIntent().hasExtra("power")){
                             i.putExtra("power",Powerdevice);
+                            PowerConnectedGatt.close();
                         }
                         startActivity(i);
                         finish();
@@ -118,26 +133,27 @@ public class PowerChallenge extends AppCompatActivity {
         setContentView(R.layout.activity_power_challenge);
         avgPower = 0;
         PowerInputs = 0;
-
+        dialogShowing = false;
         textViewTime = (TextView) findViewById(R.id.textViewTime);
-        textViewTime.setText("00:05:00");
-        timer = new CounterClass(3000,1000);
+        textViewTime.setText("00:01:00");
+        timer = new CounterClass(20000,1000);
+
         Bundle mainmenuData = getIntent().getExtras();
         if(mainmenuData == null){
-            Log.i(TAG,"WHYYYYYY");
+            Log.i(TAG,"No extras found in the powerchallenge");
             return;
         }
 
         if(getIntent().hasExtra("heart")) {
             HeartRatedevice = getIntent().getExtras().getParcelable("heart");
-            Log.i(TAG, "POWER CHALLENGE " + HeartRatedevice.getName().toString());
-            mConnectedGatt = HeartRatedevice.connectGatt(this, true, mGattCallback); // or true ?
+            Log.i(TAG, "Heart CHALLENGE " + HeartRatedevice.getName().toString());
+            HeartRateConnectedGatt = HeartRatedevice.connectGatt(this, true, mGattCallback); // or true ?
         }
 
         if(getIntent().hasExtra("power")){
             Powerdevice = getIntent().getExtras().getParcelable("power");
             Log.i(TAG, "POWER CHALLENGE " + Powerdevice.getName().toString());
-            mConnectedGatt = Powerdevice.connectGatt(this, true, mGattCallback); // or true ?
+            PowerConnectedGatt = Powerdevice.connectGatt(this, true, mGattCallback); // or true ?
         }
 
         Heart_Rate = (TextView)findViewById(R.id.hearttxt);
@@ -173,7 +189,7 @@ public class PowerChallenge extends AppCompatActivity {
         CadenceleftAxis.setDrawGridLines(false);
         CadenceleftAxis.setDrawAxisLine(false);
         CadenceleftAxis.setDrawLabels(false);
-        CadenceleftAxis.setAxisMaxValue(300f);
+        CadenceleftAxis.setAxisMaxValue(400f);
         CadenceleftAxis.setAxisMinValue(0f);
 
         //X axis
@@ -213,7 +229,7 @@ public class PowerChallenge extends AppCompatActivity {
         PowerleftAxis.setDrawAxisLine(false);
         PowerleftAxis.setDrawLabels(false);
         PowerleftAxis.setDrawGridLines(false);
-        PowerleftAxis.setAxisMaxValue(500f);
+        PowerleftAxis.setAxisMaxValue(700f);
         PowerleftAxis.setAxisMinValue(0f);
 
         //X axis
@@ -253,6 +269,7 @@ public class PowerChallenge extends AppCompatActivity {
                     TimeUnit.MILLISECONDS.toSeconds(millis)-TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(millis)));
             System.out.println(hms);
             textViewTime.setText(hms);
+            Log.i(TAG,"Tick");
 
         }
 
@@ -262,16 +279,19 @@ public class PowerChallenge extends AppCompatActivity {
             final Intent i = new Intent(PowerChallenge.this,HighScores.class);
             if(getIntent().hasExtra("heart")){
                 i.putExtra("heart",HeartRatedevice);
+                HeartRateConnectedGatt.close();
             }
 
             if(getIntent().hasExtra("power")){
                 i.putExtra("power",Powerdevice);
+                PowerConnectedGatt.close();
             }
             avgPower = avgPower/PowerInputs;
             if(PowerInputs == 0){
                 avgPower = 0;
             }
-            mConnectedGatt.close();
+
+
             Log.i(TAG,"Average Power: " + String.valueOf(avgPower));
 
             // dialog
@@ -280,7 +300,7 @@ public class PowerChallenge extends AppCompatActivity {
             cyclerName = "";
 
             // dialog process
-            dialogBuilder.setTitle("Average Power Score: " + String.valueOf(avgPower));
+            dialogBuilder.setTitle("Average Power Score: " + String.valueOf(Math.round(avgPower)));
             dialogBuilder.setMessage("Enter your Name");
             dialogBuilder.setView(txtInput);
             dialogBuilder.setPositiveButton("OK",new DialogInterface.OnClickListener(){
@@ -294,7 +314,10 @@ public class PowerChallenge extends AppCompatActivity {
                     finish();
                 }
             });
+            dialogShowing = true;
             AlertDialog dialogHighScore = dialogBuilder.create();
+            dialogHighScore.setCanceledOnTouchOutside(false);
+            dialogHighScore.setCancelable(false);
             dialogHighScore.show();
 
         }
@@ -311,29 +334,40 @@ public class PowerChallenge extends AppCompatActivity {
 
     private void updatePowerValue(BluetoothGattCharacteristic characteristic){
         // characteristic.getValue() // array of bytes
+
         final int crankRevolutions = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT16,6);
         final int lastCrankEventTime = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT16,8);
         final float Power = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT16,2);
         avgPower+=Power;
         PowerInputs++;
-        Log.i(TAG,"Entry number: " + String.valueOf(PowerInputs) + ", absolute Power: "+ String.valueOf(Power));
-
-        if (mLastCrankRevolutions >= 0) {
+        Log.i(TAG,"==================================\nEntry number: " + String.valueOf(PowerInputs) + ", absolute Power: "+ String.valueOf(Power));
+        if(mLastCrankEventTime == lastCrankEventTime) {
+            checkCounter++;
+            if(checkCounter >= 3){
+                checkCounter = 0;
+                crankCadence = 0;
+            }
+            CadenceEntries.add(new BarEntry(crankCadence, 0));
+        }
+        else if (mLastCrankRevolutions >= 0) {
             float timeDifference;
             if (lastCrankEventTime < mLastCrankEventTime)
                 timeDifference = (65535 + lastCrankEventTime - mLastCrankEventTime) / 1024.0f; // [s]
             else
                 timeDifference = (lastCrankEventTime - mLastCrankEventTime) / 1024.0f; // [s]
-            float crankCadence =0 ;
-            if(timeDifference != 0){
-                crankCadence= (crankRevolutions - mLastCrankRevolutions) * 60.0f / timeDifference;
-            }
-            if((crankRevolutions-mLastCrankRevolutions)>=4){
-                crankCadence = 0;
-            }
-            Log.i(TAG,"Cadence: " + String.valueOf(crankCadence));
-            CadenceEntries.remove(0);
+            crankCadence = (crankRevolutions - mLastCrankRevolutions) * 60.0f / timeDifference;
             CadenceEntries.add(new BarEntry(crankCadence, 0));
+            checkCounter = 0;
+        }
+        if((crankRevolutions-mLastCrankRevolutions)>=4){
+            crankCadence = 0;
+            CadenceEntries.add(new BarEntry(crankCadence, 0));
+            checkCounter = 0;
+        }
+            mLastCrankRevolutions = crankRevolutions;
+            mLastCrankEventTime = lastCrankEventTime;
+            CadenceEntries.remove(0);
+
             CadenceDataset = new BarDataSet(CadenceEntries,"Cadence");
             CadenceDataset.setColor(Color.BLACK);
             CadenceDataset.setValueTextSize(20f);
@@ -355,9 +389,6 @@ public class PowerChallenge extends AppCompatActivity {
             PowerBarChart.notifyDataSetChanged();
             PowerBarChart.setData(PowerData); // set the data and list of lables into chart
             PowerBarChart.invalidate();
-        }
-        mLastCrankRevolutions = crankRevolutions;
-        mLastCrankEventTime = lastCrankEventTime;
     }
 
     private BluetoothGattCallback mGattCallback = new BluetoothGattCallback() {
@@ -443,12 +474,7 @@ public class PowerChallenge extends AppCompatActivity {
             mHandler.sendMessage(Message.obtain(null,MSG_HEART_RATE,characteristic));
             }
             if(Power_Data_Char.equals(characteristic.getUuid())){
-                if(firstCharacChange == 0){
-                    timer.start();
-                    firstCharacChange = 1;
-                }
                 mHandler.sendMessage(Message.obtain(null,MSG_POWER,characteristic));
-
             }
 
         }
@@ -498,7 +524,6 @@ public class PowerChallenge extends AppCompatActivity {
                         Log.w(TAG,"Error updating Power value");
                         return;
                     }
-
                     updatePowerValue(characteristic);
                     break;
 

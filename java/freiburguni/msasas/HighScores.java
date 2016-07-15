@@ -75,14 +75,14 @@ public class HighScores extends AppCompatActivity {
             if(cyclerName.isEmpty()){
                 cyclerName = "No name";
             }
-            avgPower = getIntent().getExtras().getFloat("avgPower");
+            avgPower = getIntent().getExtras().getFloat("avgpower");
             Log.i(TAG,cyclerName+ ": " + String.valueOf(avgPower));
 
            // SharedPreferences sharedPreferences = getSharedPreferences("MyData", Context.MODE_PRIVATE);
             //SharedPreferences.Editor  editor = sharedPreferences.edit();
           //  editor.putString("name", cyclerName+ " " + String.valueOf((avgPower)));
 
-            arrayList.add(cyclerName + "    " +String.valueOf(avgPower));
+            arrayList.add(cyclerName + "    " +String.valueOf(Math.round(avgPower)));
             adapter.notifyDataSetChanged();
             //nameList = new Set(arrayList);
            // Log.i(TAG,"size " +String.valueOf(nameList.size()));
