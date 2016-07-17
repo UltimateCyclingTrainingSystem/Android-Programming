@@ -33,13 +33,26 @@
         android:layout_marginTop="57dp"></ListView>
 
     <ImageButton
-        android:layout_width="100dp"
-        android:layout_height="100dp"
+        android:layout_width="70dp"
+        android:layout_height="70dp"
         android:background="@drawable/bike"
         android:id="@+id/workoutbtn"
         android:onClick="GoWorkout"
+        android:layout_alignTop="@+id/highscorebtn"
+        android:layout_toEndOf="@+id/devicesfound" />
+
+    <Button
+        style="?android:attr/buttonStyleSmall"
+        android:layout_width="70dp"
+        android:layout_height="70dp"
+        android:text="High Scores"
+        android:id="@+id/highscorebtn"
+        android:background="#00bfff"
+        android:layout_marginTop="80dp"
         android:layout_below="@+id/mylist"
-        android:layout_centerHorizontal="true" />
+        android:layout_toStartOf="@+id/devicesfound"
+        android:onClick="GoToHighScores"
+        android:nestedScrollingEnabled="false" />
 
 
 </RelativeLayout>

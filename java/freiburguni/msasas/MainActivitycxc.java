@@ -25,6 +25,8 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -40,7 +42,7 @@ public class MainActivitycxc extends AppCompatActivity implements BluetoothAdapt
     private ArrayList<String> arrayList;
     private Intent intent;
     private TextView devicesfound;
-
+    boolean btnIsVisible;
     private static final String TAG = "BluetoothGattActivity";
     private BluetoothAdapter btAdapter;
     private final static int REQUEST_ENABLE_BT = 10;
@@ -50,6 +52,7 @@ public class MainActivitycxc extends AppCompatActivity implements BluetoothAdapt
     // for all the discovered devices during the scan
     private SparseArray<BluetoothDevice> mDevices;
     private ProgressDialog mProgress;
+    private ImageButton workoutbtn;
 
 
     @Override
@@ -72,7 +75,9 @@ public class MainActivitycxc extends AppCompatActivity implements BluetoothAdapt
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
         setContentView(R.layout.activity_main_activitycxc);
         setProgressBarIndeterminate(true);
-
+        btnIsVisible = false;
+        workoutbtn =(ImageButton)findViewById(R.id.workoutbtn);
+        workoutbtn.setVisibility(View.GONE);
         devicesfound = (TextView)findViewById(R.id.devicesfound);
         list = (ListView)findViewById(R.id.mylist);
         arrayList = new ArrayList<String>();
@@ -134,6 +139,12 @@ public class MainActivitycxc extends AppCompatActivity implements BluetoothAdapt
 
                 }
         );
+    }
+
+    public void GoToHighScores(View view){
+        Intent i = new Intent(this,HighScores.class);
+        i.putExtra("nothing",true);
+        startActivity(i);
     }
 
     public void GoWorkout(View view){
@@ -202,6 +213,10 @@ public class MainActivitycxc extends AppCompatActivity implements BluetoothAdapt
         switch (item.getItemId()){
             case R.id.action_scan:
                 mDevices.clear();
+                workoutbtn.setVisibility(View.GONE);
+                btnIsVisible = false;
+                arrayList.clear();
+                adapter.notifyDataSetChanged();
                 Log.i(TAG,"Go to start scan ");
                 startScan();
                 return true;
@@ -226,9 +241,16 @@ public class MainActivitycxc extends AppCompatActivity implements BluetoothAdapt
 
     private void startScan() {
         btAdapter.startLeScan(this);
+        if(intent.hasExtra("heart")){
+            intent.removeExtra("heart");
+        }
+        if(intent.hasExtra("power")){
+            intent.removeExtra("power");
+        }
+        btnIsVisible = false;
         setProgressBarIndeterminateVisibility(true);
         Toast.makeText(this,"Scanning",Toast.LENGTH_SHORT).show();
-        mHandler.postDelayed(mStopRunnable, 1000); //stop scan after 1 seconds
+        mHandler.postDelayed(mStopRunnable, 2000); //stop scan after 1 seconds
     }
 
     private void stopScan() {
@@ -266,6 +288,10 @@ public class MainActivitycxc extends AppCompatActivity implements BluetoothAdapt
                         Log.i(TAG,mDevices.valueAt(i).getName().toString() + " "+i);
                         arrayList.add(mDevices.valueAt(i).getName().toString());
                         adapter.notifyDataSetChanged();
+                        if(!btnIsVisible){
+                            workoutbtn.setVisibility(View.VISIBLE);
+                            btnIsVisible = true;
+                        }
                     }
                     devicesfound.setText("Device(s) Found: "+ mDevices.size());
                     break;

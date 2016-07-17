@@ -355,7 +355,7 @@ public class PowerChallenge extends AppCompatActivity {
                 timeDifference = (65535 + lastCrankEventTime - mLastCrankEventTime) / 1024.0f; // [s]
             else
                 timeDifference = (lastCrankEventTime - mLastCrankEventTime) / 1024.0f; // [s]
-            crankCadence = (crankRevolutions - mLastCrankRevolutions) * 60.0f / timeDifference;
+            crankCadence = Math.round((crankRevolutions - mLastCrankRevolutions) * 60.0f / timeDifference);
             CadenceEntries.add(new BarEntry(crankCadence, 0));
             checkCounter = 0;
         }
