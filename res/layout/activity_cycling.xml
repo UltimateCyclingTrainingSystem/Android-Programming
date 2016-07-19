@@ -7,16 +7,24 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    tools:context="freiburguni.msasas.Cycling">
-
+    tools:context="freiburguni.msasas.PowerChallenge"
+    android:background="#FFFFFF"
+    android:contextClickable="true">
     <ImageView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
         android:src="@drawable/heart"
         android:id="@+id/imageView"
         android:layout_below="@+id/Powerplain"
-        android:layout_alignParentStart="true"
-        android:layout_alignEnd="@+id/powerchart" />
+        android:layout_alignParentStart="true" />
+
+    <ImageView
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:src="@drawable/sandtime"
+        android:id="@id/imageView"
+        android:layout_below="@+id/cadenceplain"
+        android:layout_alignEnd="@+id/cadenceplain" />
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -46,7 +54,7 @@
         android:id="@+id/powerchart"
         android:layout_width="100dp"
         android:layout_height="300dp"
-        android:layout_alignTop="@+id/cadencechart"
+        android:layout_alignParentTop="true"
         android:layout_alignParentStart="true" />
 
     <TextView
@@ -61,39 +69,22 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceMedium"
-        android:text="Time"
-        android:id="@+id/timertxt1"
-        android:textSize="20dp"
-        android:layout_below="@+id/cadenceplain"
-        android:layout_alignEnd="@+id/cadenceplain"
-        android:layout_marginTop="68dp"
-        android:textColor="@color/abc_input_method_navigation_guard" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceLarge"
         android:id="@+id/textViewTime"
+        android:textColor="@color/abc_input_method_navigation_guard"
+        android:layout_alignBaseline="@+id/hearttxt"
         android:layout_alignBottom="@+id/hearttxt"
-        android:layout_alignStart="@+id/timertxt1"
-        android:layout_marginStart="49dp"
-        android:textColor="@color/abc_input_method_navigation_guard" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceLarge"
-        android:id="@+id/timerTextView"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginBottom="171dp" />
+        android:layout_alignStart="@+id/cadenceplain" />
 
     <Button
-        android:layout_width="wrap_content"
+        style="?android:attr/buttonStyleSmall"
+        android:layout_width="100dp"
         android:layout_height="wrap_content"
-        android:text="Hi"
-        android:id="@+id/button"
+        android:text="Start"
+        android:id="@+id/startbtn"
+        android:background="#00bfff"
         android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true" />
+        android:layout_centerHorizontal="true"
+        android:onClick="StartBaby" />
+
 </RelativeLayout>

@@ -69,15 +69,12 @@ public class PowerChallenge extends AppCompatActivity {
     private BarData CadenceData;
     private Button startbtn;
     private boolean startbtnpressed;
-
     private BarChart PowerBarChart;
     private ArrayList<BarEntry> PowerEntries;
     private BarDataSet PowerDataset;
     private ArrayList<String> PowerLabels;
     private BarData PowerData;
-
     private TextView Heart_Rate;
-
 
     private int mLastCrankEventTime;
     private int mLastCrankRevolutions;
@@ -358,6 +355,7 @@ public class PowerChallenge extends AppCompatActivity {
         }
         Log.i(TAG,"==================================\nEntry number: " + String.valueOf(PowerInputs) + ", absolute Power: "+ String.valueOf(Power));
         if(mLastCrankEventTime == lastCrankEventTime) {
+            Log.i(TAG,"HI");
             checkCounter++;
             if(checkCounter >= 3){
                 checkCounter = 0;
@@ -367,6 +365,7 @@ public class PowerChallenge extends AppCompatActivity {
         }
         else if (mLastCrankRevolutions >= 0) {
             float timeDifference;
+            Log.i(TAG,"Hallo");
             if (lastCrankEventTime < mLastCrankEventTime)
                 timeDifference = (65535 + lastCrankEventTime - mLastCrankEventTime) / 1024.0f; // [s]
             else
@@ -376,6 +375,8 @@ public class PowerChallenge extends AppCompatActivity {
             checkCounter = 0;
         }
         if((crankRevolutions-mLastCrankRevolutions)>=4){
+            Log.i(TAG,"no");
+
             crankCadence = 0;
             CadenceEntries.add(new BarEntry(crankCadence, 0));
             checkCounter = 0;
@@ -413,7 +414,6 @@ public class PowerChallenge extends AppCompatActivity {
         avgPower = 0;
         PowerInputs = 0;
         timer.start();
-
     }
 
     private BluetoothGattCallback mGattCallback = new BluetoothGattCallback() {

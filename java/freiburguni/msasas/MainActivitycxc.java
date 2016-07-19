@@ -149,6 +149,8 @@ public class MainActivitycxc extends AppCompatActivity implements BluetoothAdapt
         Intent i = new Intent(this,HighScores.class);
         i.putExtra("nothing",true);
         startActivity(i);
+
+
     }
 
     public void GoWorkout(View view){

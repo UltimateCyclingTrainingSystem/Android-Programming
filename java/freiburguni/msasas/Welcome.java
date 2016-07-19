@@ -75,6 +75,13 @@ public class Welcome extends AppCompatActivity {
 
     public void Cycling(View view){
         Intent i = new Intent(this,Cycling.class);
+        if(getIntent().hasExtra("heart")){
+            i.putExtra("heart",HeartRatedevice);
+        }
+
+        if(getIntent().hasExtra("power")){
+            i.putExtra("power",Powerdevice);
+        }
         startActivity(i);
         finish();
     }
