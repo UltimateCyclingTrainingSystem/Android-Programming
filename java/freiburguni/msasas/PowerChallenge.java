@@ -100,7 +100,7 @@ public class PowerChallenge extends AppCompatActivity {
             return;
         else{
             startbtnpressed = false;
-            textViewTime.setText("00:00:20");
+            textViewTime.setText("00:05:00");
             startbtn.setVisibility(View.VISIBLE);
 
         }
@@ -143,8 +143,8 @@ public class PowerChallenge extends AppCompatActivity {
         startbtn = (Button)findViewById(R.id.startbtn);
         startbtnpressed = false;
         textViewTime = (TextView) findViewById(R.id.textViewTime);
-        textViewTime.setText("00:00:10");
-        timer = new CounterClass(20000,1000);
+        textViewTime.setText("00:05:00");
+        timer = new CounterClass(300000,1000);
 
         Bundle mainmenuData = getIntent().getExtras();
         if(mainmenuData == null){
@@ -173,13 +173,13 @@ public class PowerChallenge extends AppCompatActivity {
         CadenceBarChart = (BarChart)findViewById(R.id.cadencechart);
         CadenceEntries = new ArrayList<>(); // yentries data
         CadenceEntries.add(new BarEntry(0,0));
-        CadenceDataset = new BarDataSet(CadenceEntries,"Cadence");
+        CadenceDataset = new BarDataSet(CadenceEntries,"Cadence rpm");
         CadenceDataset.setColor(Color.BLACK);
         CadenceDataset.setValueTextColor(Color.BLACK);
         CadenceDataset.setValueTextSize(20f);
         // creating labels
         CadenceLabels = new ArrayList<String>(); //xentries
-        CadenceLabels.add("Power");
+        CadenceLabels.add("Cadence");
 
         CadenceData = new BarData(CadenceLabels, CadenceDataset);
         CadenceBarChart.setData(CadenceData); // set the data and list of lables into chart
@@ -213,7 +213,7 @@ public class PowerChallenge extends AppCompatActivity {
         PowerBarChart = (BarChart)findViewById(R.id.powerchart);
         PowerEntries = new ArrayList<>(); // yentries data
         PowerEntries.add(new BarEntry(0,0));
-        PowerDataset = new BarDataSet(PowerEntries,"Power");
+        PowerDataset = new BarDataSet(PowerEntries,"Power W");
         PowerDataset.setColor(Color.BLACK);
         PowerDataset.setValueTextColor(Color.BLACK);
         PowerDataset.setValueTextSize(20f);
@@ -340,7 +340,7 @@ public class PowerChallenge extends AppCompatActivity {
     // Method to extract the arduino data and update the UI
     private void updateHeartRateValue(BluetoothGattCharacteristic characteristic){
         final int heart_rate_value =  characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8,1);
-        Heart_Rate.setText(String.valueOf(heart_rate_value));
+        Heart_Rate.setText(String.valueOf(heart_rate_value) + " bpm");
     }
 
     private void updatePowerValue(BluetoothGattCharacteristic characteristic){
@@ -385,7 +385,7 @@ public class PowerChallenge extends AppCompatActivity {
             mLastCrankEventTime = lastCrankEventTime;
             CadenceEntries.remove(0);
 
-            CadenceDataset = new BarDataSet(CadenceEntries,"Cadence");
+            CadenceDataset = new BarDataSet(CadenceEntries,"Cadence rpm");
             CadenceDataset.setColor(Color.BLACK);
             CadenceDataset.setValueTextSize(20f);
             CadenceDataset.setValueTextColor(Color.BLACK);
@@ -397,7 +397,7 @@ public class PowerChallenge extends AppCompatActivity {
 
             PowerEntries.remove(0);
             PowerEntries.add(new BarEntry(Power, 0));
-            PowerDataset = new BarDataSet(PowerEntries,"Power");
+            PowerDataset = new BarDataSet(PowerEntries,"Power W");
             PowerDataset.setColor(Color.BLACK);
             PowerDataset.setValueTextSize(20f);
             PowerDataset.setValueTextColor(Color.BLACK);

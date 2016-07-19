@@ -75,6 +75,7 @@ public class MainActivitycxc extends AppCompatActivity implements BluetoothAdapt
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
         setContentView(R.layout.activity_main_activitycxc);
@@ -257,7 +258,7 @@ public class MainActivitycxc extends AppCompatActivity implements BluetoothAdapt
         btnIsVisible = false;
         setProgressBarIndeterminateVisibility(true);
         Toast.makeText(this,"Scanning",Toast.LENGTH_SHORT).show();
-        mHandler.postDelayed(mStopRunnable, 2000); //stop scan after 1 seconds
+        mHandler.postDelayed(mStopRunnable, 3000); //stop scan after _ milli seconds
     }
 
     private void stopScan() {
