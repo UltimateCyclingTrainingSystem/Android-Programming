@@ -72,4 +72,10 @@ public class Welcome extends AppCompatActivity {
         startActivity(i);
         finish();
     }
+
+    public void Cycling(View view){
+        Intent i = new Intent(this,Cycling.class);
+        startActivity(i);
+        finish();
+    }
 }

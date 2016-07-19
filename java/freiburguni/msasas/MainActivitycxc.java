@@ -26,6 +26,9 @@ import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CheckedTextView;
+import android.widget.CompoundButton;
 import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -35,9 +38,9 @@ import org.w3c.dom.Text;
 
 import java.util.ArrayList;
 
-
 public class MainActivitycxc extends AppCompatActivity implements BluetoothAdapter.LeScanCallback {
     private ListView list;
+    CheckBox checkBox;
     private ArrayAdapter<String> adapter;
     private ArrayList<String> arrayList;
     private Intent intent;
@@ -46,6 +49,7 @@ public class MainActivitycxc extends AppCompatActivity implements BluetoothAdapt
     private static final String TAG = "BluetoothGattActivity";
     private BluetoothAdapter btAdapter;
     private final static int REQUEST_ENABLE_BT = 10;
+
     // Arduino Power serivce and characterestic
 
     private BluetoothGatt mConnectedGatt;
@@ -80,16 +84,19 @@ public class MainActivitycxc extends AppCompatActivity implements BluetoothAdapt
         workoutbtn.setVisibility(View.GONE);
         devicesfound = (TextView)findViewById(R.id.devicesfound);
         list = (ListView)findViewById(R.id.mylist);
+        list.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
         arrayList = new ArrayList<String>();
         // Adapter: You need three parameters 'the context, id of the layout (it will be where the data is shown),
         // and the array that contains the data
-        adapter = new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_spinner_item, arrayList){
+        adapter = new ArrayAdapter<String>(getApplicationContext(), android.R.layout.select_dialog_multichoice, arrayList){
             @Override
             public View getView(int position, View convertView, ViewGroup parent) {
                 View view = super.getView(position,convertView,parent);
                 TextView tv = (TextView) view.findViewById(android.R.id.text1);
                 tv.setTextColor(Color.BLACK);
                 tv.setTextSize(25f);
+                checkBox = (CheckBox) view.findViewById(android.R.id.checkbox);
+
                 return view;
             }
         };
@@ -117,22 +124,19 @@ public class MainActivitycxc extends AppCompatActivity implements BluetoothAdapt
                 new AdapterView.OnItemClickListener(){
                     @Override
                     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                        //Obtain the discovered device to connect with
                         BluetoothDevice device = mDevices.valueAt(position);
                         if(device.getName().toString().equals("heart rate sensor")) {
                             if (intent.hasExtra("heart")) {
-                                Toast.makeText(MainActivitycxc.this, device.getName().toString() + " already added", Toast.LENGTH_SHORT).show();
+                                intent.removeExtra("heart");
                             } else {
                                 intent.putExtra("heart", device);
-                                Toast.makeText(MainActivitycxc.this, device.getName().toString() + " added to workout", Toast.LENGTH_SHORT).show();
                             }
                         }
                         else{
                             if (intent.hasExtra("power")) {
-                                Toast.makeText(MainActivitycxc.this, device.getName().toString() + " already added", Toast.LENGTH_SHORT).show();
+                                intent.removeExtra("power");
                             } else {
                                 intent.putExtra("power", device);
-                                Toast.makeText(MainActivitycxc.this, device.getName().toString() + " added to workout", Toast.LENGTH_SHORT).show();
                             }
                         }
                     }
@@ -167,6 +171,7 @@ public class MainActivitycxc extends AppCompatActivity implements BluetoothAdapt
         mHandler.removeCallbacks(mStopRunnable);
         mHandler.removeCallbacks(mStartRunnable);
         btAdapter.stopLeScan(this);
+
     }
 
     @Override

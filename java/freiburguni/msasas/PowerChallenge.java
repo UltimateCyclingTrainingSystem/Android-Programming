@@ -24,7 +24,10 @@ import android.os.Message;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.InputFilter;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -51,7 +54,7 @@ public class PowerChallenge extends AppCompatActivity {
     private static final UUID Heart_rate_Service = UUID.fromString("0000180D-0000-1000-8000-00805f9b34fb");
     private static final UUID Heart_rate_Char = UUID.fromString("00002A37-0000-1000-8000-00805f9b34fb");
     TextView textViewTime;
-    private static float avgPower;
+    private float avgPower;
     private static int PowerInputs;
     private  int checkCounter = 0;
     private float crankCadence= 0;
@@ -64,6 +67,8 @@ public class PowerChallenge extends AppCompatActivity {
     private BarDataSet CadenceDataset;
     private ArrayList<String> CadenceLabels;
     private BarData CadenceData;
+    private Button startbtn;
+    private boolean startbtnpressed;
 
     private BarChart PowerBarChart;
     private ArrayList<BarEntry> PowerEntries;
@@ -74,9 +79,8 @@ public class PowerChallenge extends AppCompatActivity {
     private TextView Heart_Rate;
 
 
-    private int mLastCrankEventTime = 0;
-    private int mLastCrankRevolutions = 0;
-
+    private int mLastCrankEventTime;
+    private int mLastCrankRevolutions;
     private BluetoothGatt HeartRateConnectedGatt;
     private BluetoothGatt PowerConnectedGatt;
     private static final String TAG = "BluetoothGattActivity";
@@ -87,6 +91,7 @@ public class PowerChallenge extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
+        startbtnpressed = false;
         timer.cancel();
 
     }
@@ -97,9 +102,10 @@ public class PowerChallenge extends AppCompatActivity {
         if(dialogShowing)
             return;
         else{
-            avgPower = 0;
-            PowerInputs = 0;
-            timer.start();
+            startbtnpressed = false;
+            textViewTime.setText("00:00:20");
+            startbtn.setVisibility(View.VISIBLE);
+
         }
     }
 
@@ -115,6 +121,7 @@ public class PowerChallenge extends AppCompatActivity {
                         if(getIntent().hasExtra("heart")){
                             i.putExtra("heart",HeartRatedevice);
                             HeartRateConnectedGatt.close();
+
                         }
 
                         if(getIntent().hasExtra("power")){
@@ -131,11 +138,15 @@ public class PowerChallenge extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_power_challenge);
+        mLastCrankRevolutions = 0;
+        mLastCrankEventTime = 0;
         avgPower = 0;
         PowerInputs = 0;
         dialogShowing = false;
+        startbtn = (Button)findViewById(R.id.startbtn);
+        startbtnpressed = false;
         textViewTime = (TextView) findViewById(R.id.textViewTime);
-        textViewTime.setText("00:01:00");
+        textViewTime.setText("00:00:10");
         timer = new CounterClass(20000,1000);
 
         Bundle mainmenuData = getIntent().getExtras();
@@ -147,13 +158,15 @@ public class PowerChallenge extends AppCompatActivity {
         if(getIntent().hasExtra("heart")) {
             HeartRatedevice = getIntent().getExtras().getParcelable("heart");
             Log.i(TAG, "Heart CHALLENGE " + HeartRatedevice.getName().toString());
-            HeartRateConnectedGatt = HeartRatedevice.connectGatt(this, true, mGattCallback); // or true ?
+                HeartRateConnectedGatt = HeartRatedevice.connectGatt(this, true, mGattCallback); // or true ?
+
         }
 
         if(getIntent().hasExtra("power")){
             Powerdevice = getIntent().getExtras().getParcelable("power");
             Log.i(TAG, "POWER CHALLENGE " + Powerdevice.getName().toString());
             PowerConnectedGatt = Powerdevice.connectGatt(this, true, mGattCallback); // or true ?
+
         }
 
         Heart_Rate = (TextView)findViewById(R.id.hearttxt);
@@ -229,7 +242,7 @@ public class PowerChallenge extends AppCompatActivity {
         PowerleftAxis.setDrawAxisLine(false);
         PowerleftAxis.setDrawLabels(false);
         PowerleftAxis.setDrawGridLines(false);
-        PowerleftAxis.setAxisMaxValue(700f);
+        PowerleftAxis.setAxisMaxValue(1000f);
         PowerleftAxis.setAxisMinValue(0f);
 
         //X axis
@@ -297,6 +310,7 @@ public class PowerChallenge extends AppCompatActivity {
             // dialog
             dialogBuilder = new AlertDialog.Builder(PowerChallenge.this);
             final EditText txtInput = new EditText(PowerChallenge.this);
+            txtInput.setFilters(new InputFilter[]{new InputFilter.LengthFilter(17)});
             cyclerName = "";
 
             // dialog process
@@ -338,8 +352,10 @@ public class PowerChallenge extends AppCompatActivity {
         final int crankRevolutions = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT16,6);
         final int lastCrankEventTime = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT16,8);
         final float Power = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT16,2);
-        avgPower+=Power;
-        PowerInputs++;
+        if(startbtnpressed) {
+            avgPower += Power;
+            PowerInputs++;
+        }
         Log.i(TAG,"==================================\nEntry number: " + String.valueOf(PowerInputs) + ", absolute Power: "+ String.valueOf(Power));
         if(mLastCrankEventTime == lastCrankEventTime) {
             checkCounter++;
@@ -389,6 +405,15 @@ public class PowerChallenge extends AppCompatActivity {
             PowerBarChart.notifyDataSetChanged();
             PowerBarChart.setData(PowerData); // set the data and list of lables into chart
             PowerBarChart.invalidate();
+    }
+
+    public void StartBaby(View view){
+        startbtnpressed = true;
+        startbtn.setVisibility(View.GONE);
+        avgPower = 0;
+        PowerInputs = 0;
+        timer.start();
+
     }
 
     private BluetoothGattCallback mGattCallback = new BluetoothGattCallback() {
@@ -462,6 +487,7 @@ public class PowerChallenge extends AppCompatActivity {
 
             }
         }
+
 
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {

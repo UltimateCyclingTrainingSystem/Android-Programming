@@ -5,9 +5,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.nfc.Tag;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.Pair;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
@@ -15,17 +17,18 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import org.w3c.dom.Text;
-
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.CyclicBarrier;
+import java.util.StringTokenizer;
 
 public class HighScores extends AppCompatActivity {
 
@@ -36,12 +39,14 @@ public class HighScores extends AppCompatActivity {
     private Button clearbtn;
     private ListView list;
     private ArrayAdapter<String> adapter;
-    private static ArrayList<String> arrayList = new ArrayList<String>();;
+    private static ArrayList<String> arrayList = new ArrayList<String>();
+    private static ArrayList<Float> floatList = new ArrayList<Float>();
     private static final String TAG = "BluetoothGattActivity";
     private Intent intent;
-    private static Set<String> nameList;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_high_scores);
         Bundle mainmenuData = getIntent().getExtras();
@@ -75,9 +80,19 @@ public class HighScores extends AppCompatActivity {
                 arrayList.add(line);
             }
             din.close();
+
+            FileInputStream input2 = openFileInput("avgPower.txt"); // Open input stream
+            DataInputStream din2 = new DataInputStream(input2);
+            int sz2 = din2.readInt(); // Read line count
+            floatList.clear();
+            for (int i = 0; i < sz2; i++) { // Read line
+                String line = din2.readUTF();
+                floatList.add(Float.valueOf(line));
+            }
+            din2.close();
         }
         catch (IOException exc) { exc.printStackTrace(); }
-
+        //Collections.sort(floatList,Collections.<Float>reverseOrder());
         clearbtn = (Button) findViewById(R.id.btnclearscores);
         list = (ListView) findViewById(R.id.highscorelist);
 
@@ -89,7 +104,7 @@ public class HighScores extends AppCompatActivity {
                 View view = super.getView(position,convertView,parent);
                 TextView tv = (TextView) view.findViewById(android.R.id.text1);
                 tv.setTextColor(Color.BLACK);
-                tv.setTextSize(25f);
+                tv.setTextSize(20f);
                 return view;
             }
         };
@@ -97,7 +112,6 @@ public class HighScores extends AppCompatActivity {
         list.setAdapter(adapter);
 
         if(getIntent().hasExtra("name")){
-            Log.i(TAG,"Yew");
             cyclerName = getIntent().getExtras().getString("name");
             if(cyclerName.isEmpty()){
                 cyclerName = "No name";
@@ -105,12 +119,22 @@ public class HighScores extends AppCompatActivity {
             avgPower = getIntent().getExtras().getFloat("avgpower");
             Log.i(TAG,cyclerName+ ": " + String.valueOf(avgPower));
             arrayList.add(cyclerName + "    " +String.valueOf(Math.round(avgPower)));
-            SharedPreferences sharedPreferences = getSharedPreferences("AveragePower", Context.MODE_PRIVATE);
-            SharedPreferences.Editor editor = sharedPreferences.edit(); // object to edit the file
-            editor.apply();
-            String name = sharedPreferences.getString("fieh","");
-            arrayList.add(name);
+            floatList.add(avgPower);
+            for(int i = 0;i<floatList.size();i++){
+                for(int j = i+1;j<floatList.size();j++) {
+                    if(floatList.get(j)>floatList.get(i)){
+                        float tmp = floatList.get(j);
+                        floatList.set(j,floatList.get(i));
+                        floatList.set(i,tmp);
+
+                        String tmp2 = arrayList.get(j);
+                        arrayList.set(j,arrayList.get(i));
+                        arrayList.set(i,tmp2);
+                    }
+                }
+            }
             adapter.notifyDataSetChanged();
+
         }
     }
 
@@ -122,10 +146,21 @@ public class HighScores extends AppCompatActivity {
             FileOutputStream output = openFileOutput("lines.txt",MODE_WORLD_READABLE);
             DataOutputStream dout = new DataOutputStream(output);
             dout.writeInt(arrayList.size()); // Save line count
-            for(String line : arrayList) // Save lines
+            for(String line : arrayList) { // Save lines
                 dout.writeUTF(line);
+            }
             dout.flush(); // Flush stream ...
             dout.close(); // ... and close.
+
+            //Modes: MODE_PRIVATE, MODE_WORLD_READABLE, MODE_WORLD_WRITABLE
+            FileOutputStream output2 = openFileOutput("avgPower.txt",MODE_WORLD_READABLE);
+            DataOutputStream dout2 = new DataOutputStream(output2);
+            dout2.writeInt(floatList.size()); // Save line count
+            for(float line : floatList) { // Save lines
+                dout2.writeUTF(String.valueOf(line));
+            }
+            dout2.flush(); // Flush stream ...
+            dout2.close(); // ... and close.
         }
         catch (IOException exc) { exc.printStackTrace(); }
     }
@@ -133,6 +168,7 @@ public class HighScores extends AppCompatActivity {
     public void ClearScores(View view) {
         // this line adds the data of your EditText and puts in your array
         arrayList.clear();
+        floatList.clear();
         // next thing you have to do is check if your adapter has changed
         adapter.notifyDataSetChanged();
         SharedPreferences sharedPreferences = getSharedPreferences("AveragePower", Context.MODE_PRIVATE);
