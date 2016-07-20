@@ -1,5 +1,6 @@
 package freiburguni.msasas;
 
+import android.annotation.TargetApi;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -8,10 +9,14 @@ import android.bluetooth.BluetoothManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.location.LocationManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -36,7 +41,9 @@ import android.widget.Toast;
 
 import org.w3c.dom.Text;
 
+import java.lang.annotation.Target;
 import java.util.ArrayList;
+import java.util.jar.Manifest;
 
 public class MainActivitycxc extends AppCompatActivity implements BluetoothAdapter.LeScanCallback {
     private ListView list;
@@ -49,6 +56,9 @@ public class MainActivitycxc extends AppCompatActivity implements BluetoothAdapt
     private static final String TAG = "BluetoothGattActivity";
     private BluetoothAdapter btAdapter;
     private final static int REQUEST_ENABLE_BT = 10;
+    String[] perms = {"android.permission.ACCESS_FINE_LOCATION", "android.permission.ACCESS_COARSE_LOCATION"};
+    int permsRequestCode = 200;
+
 
     // Arduino Power serivce and characterestic
 
@@ -58,7 +68,35 @@ public class MainActivitycxc extends AppCompatActivity implements BluetoothAdapt
     private ProgressDialog mProgress;
     private ImageButton workoutbtn;
 
+    public void statusCheck()
+    {
+        final LocationManager manager = (LocationManager) getSystemService( Context.LOCATION_SERVICE );
 
+        if ( !manager.isProviderEnabled( LocationManager.GPS_PROVIDER ) ) {
+            buildAlertMessageNoGps();
+
+        }
+
+
+    }
+    private void buildAlertMessageNoGps() {
+        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage("Your GPS seems to be disabled, do you want to enable it?")
+                .setCancelable(false)
+                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    public void onClick(final DialogInterface dialog,  final int id) {
+                        startActivity(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
+                    }
+                })
+                .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                    public void onClick(final DialogInterface dialog, final int id) {
+                        dialog.cancel();
+                    }
+                });
+        final AlertDialog alert = builder.create();
+        alert.show();
+
+    }
     @Override
     public void onBackPressed() {
         new AlertDialog.Builder(this).setIcon(android.R.drawable.ic_dialog_alert).setTitle("Exit")
@@ -72,12 +110,27 @@ public class MainActivitycxc extends AppCompatActivity implements BluetoothAdapt
                 }).setNegativeButton("No", null).show();
     }
 
+    @Override
+    public void onRequestPermissionsResult(int permsRequestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(permsRequestCode, permissions, grantResults);
+        switch (permsRequestCode){
+            case 200:
+                Log.i(TAG,"hello");
+                boolean fineLocationAccepted = grantResults[0] == PackageManager.PERMISSION_GRANTED;
+                boolean CoarseLocationAccepted = grantResults[0] == PackageManager.PERMISSION_GRANTED;
+                break;
+        }
+
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
+        statusCheck();
+        requestPermissions(perms,permsRequestCode);
+
         setContentView(R.layout.activity_main_activitycxc);
         setProgressBarIndeterminate(true);
         btnIsVisible = false;
@@ -95,7 +148,7 @@ public class MainActivitycxc extends AppCompatActivity implements BluetoothAdapt
                 View view = super.getView(position,convertView,parent);
                 TextView tv = (TextView) view.findViewById(android.R.id.text1);
                 tv.setTextColor(Color.BLACK);
-                tv.setTextSize(25f);
+                tv.setTextSize(20f);
                 checkBox = (CheckBox) view.findViewById(android.R.id.checkbox);
 
                 return view;

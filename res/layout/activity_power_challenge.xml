@@ -13,18 +13,20 @@
     <ImageView
         android:layout_width="100dp"
         android:layout_height="100dp"
-        android:src="@drawable/heart"
-        android:id="@+id/imageView"
-        android:layout_below="@+id/Powerplain"
-        android:layout_alignParentStart="true" />
-
-    <ImageView
-        android:layout_width="100dp"
-        android:layout_height="100dp"
         android:src="@drawable/sandtime"
         android:id="@id/imageView"
         android:layout_below="@+id/cadenceplain"
         android:layout_alignEnd="@+id/cadenceplain" />
+
+    <ImageView
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:src="@drawable/heart"
+        android:id="@+id/imageView1"
+        android:layout_below="@+id/Powerplain"
+        android:layout_alignParentStart="true" />
+
+
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -58,13 +60,13 @@
         android:layout_alignParentStart="true" />
 
     <TextView
-        android:layout_width="wrap_content"
+        android:layout_width="70dp"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceMedium"
         android:text="N/A"
         android:id="@+id/hearttxt"
-        android:layout_below="@+id/imageView"
-        android:layout_alignEnd="@+id/Powerplain" />
+        android:layout_below="@+id/imageView1"
+        android:layout_alignEnd="@+id/imageView1" />
 
     <TextView
         android:layout_width="wrap_content"
@@ -78,7 +80,7 @@
 
     <Button
         style="?android:attr/buttonStyleSmall"
-        android:layout_width="100dp"
+        android:layout_width="90dp"
         android:layout_height="wrap_content"
         android:text="Start"
         android:id="@+id/startbtn"
