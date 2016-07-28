@@ -1,4 +1,5 @@
 The android app was done using the android studio and it consists of 5 main activities as follows:
+
 1.	MainActivitycxc
 •	Functionality: Scan for BLE devices and the selected devices are passed on to the Welcome activity.
 
